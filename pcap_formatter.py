@@ -4,8 +4,6 @@ import os
 import datetime
 
 
-###### Note When running this script, make sure to do python3 pcap_formatter.py -i <input_file> -o <output_file> ##########
-
 ## Reference: https://www.tcpdump.org/manpages/pcap-savefile.5.html
 ## Reference : https://wiki.wireshark.org/Development/LibpcapFileFormat
 
