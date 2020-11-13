@@ -1,6 +1,6 @@
 # Sample Packets Info
 
-These packets were generated using the `test_packets.py` script. The eEhernet MAC and IP addresses are all randomly generated.
+These packets were generated using the `test_packets.py` script. The Ethernet MAC and IP addresses are all randomly generated.
 
 ## Naming convention
 `<network_layer>_<transport_layer>_<application_layer>_<min>_to_<max>.txt`
