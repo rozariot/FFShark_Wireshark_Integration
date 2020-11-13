@@ -3,7 +3,7 @@
 These packets were generated using the `test_packets.py` script. The eEhernet MAC and IP addresses are all randomly generated.
 
 ## Naming convention
-<network_layer>_<transport_layer>_<application_layer>_<min>_to_<max>.txt
+`<network_layer>_<transport_layer>_<application_layer>_<min>_to_<max>.txt`
 
 ### HTTP
 For HTTP, the payload is randomly generated letters, digits, and spaces of size varying between min to max.
