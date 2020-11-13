@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import sys
 from scapy.all import *
@@ -6,8 +6,6 @@ from scapy.layers.http import *
 import argparse
 import string
 import random
-
-message = "And let's dispel once and for all with this fiction that Barack Obama doesn't know what he's doing. He knows exactly what he's doing."
 
 def random_ip_addr():
     n1 = random.randint(0,255)
@@ -149,8 +147,8 @@ def main():
         print(packet.summary())
     if (args.binary):
         print(packet)
-    if (not args.hexdump and not args.show and not args.summary):
-        print(bytes_hex(packet))
+    if (not args.hexdump and not args.show and not args.summary and not args.binary):
+        sys.stdout.buffer.write(bytes_hex(packet))
 
     return 0
 
