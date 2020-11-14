@@ -146,7 +146,8 @@ def main():
     if (args.summary):
         print(packet.summary())
     if (args.binary):
-        print(packet)
+        # print(packet)
+        sys.stdout.buffer.write(raw(packet))
     if (not args.hexdump and not args.show and not args.summary and not args.binary):
         sys.stdout.buffer.write(bytes_hex(packet))
 
