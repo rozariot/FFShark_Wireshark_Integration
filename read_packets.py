@@ -33,12 +33,14 @@ def main():
     if (args.summary):
         print(packet.summary())
     if (args.binary):
-        print(packet)
+        sys.stdout.buffer.write(raw(packet))
+        # print(packet)
     if (args.pcap):
         # print(PcapWriter(packet))
         wrpcap(args.pcap, packet)
-        with open(args.pcap, 'rb') as file:
-            sys.stdout.buffer.write(file.read())
+        if (arg.pcap_print):
+            with open(args.pcap, 'rb') as file:
+                sys.stdout.buffer.write(file.read())
     if (not args.hexdump and not args.summary and not args.binary and not args.pcap):
         packet.show2()
 
