@@ -4,6 +4,8 @@
 
 `read_packets.py` is used to read the generated packets into human readable. It can also output packets into PCAP format. Again, use the `--help` option to see more about it.
 
+`pcap_formatter.py` is used to read a packet stored as a binary file (.bin) and formats it into pcap format. Use `-h` to see what to place as arguments.
+
 `spoke.sh` is a wrapper around "poke" to use a locking file so only one thread may run poke at a time. Otherwise we can end up with corrupted data if we use "poke" in multithreaded situations.
 
 ## Displaying generated packets on Wireshark
@@ -21,8 +23,6 @@ More info on running sshdump in general can be found [here](https://docs.google.
 - Have only tried with one packet at a time. How to do two packets?
 
 - savi only has scapy installed for Python3 so need to use that version. I mostly tested using Python2.7, so there could be some new bugs due to different versions. pip is not installed on savi, so I'd need to install it if we want it to run in Python2.7
-
-- No documentation on `pcap_formatter.py`.
 
 
 ## Useful links
