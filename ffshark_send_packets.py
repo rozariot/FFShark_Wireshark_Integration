@@ -19,9 +19,10 @@ FIFO_DATA_WIDTH = 4 #in bytes
 
 # Commands
 READ_CMD = "./spoke.sh"
-WRITE_CMD = "poke "
+WRITE_CMD = "./spoke.sh "
+HIDE_OUTPUT = " > /dev/null"
 
-WRITE_FILE_CMD = "./send_file.sh "
+WRITE_FILE_CMD = "./send_file_safe.sh "
 
 def read_reg(addr):
     addr_hex = hex(addr)
@@ -36,7 +37,7 @@ def read_reg(addr):
 def write_reg(addr, data):
     addr_hex = hex(addr)
     data_hex = hex(data)
-    os.system(WRITE_CMD + addr_hex + " " + data_hex) 
+    os.system(WRITE_CMD + addr_hex + " " + data_hex + HIDE_OUTPUT) 
 
 def get_file_size_in_words(file):
     size_bytes = os.path.getsize(file)
@@ -46,7 +47,7 @@ def main():
     parser = argparse.ArgumentParser(description="Sends packets randomly one by one to ffshark when given packet text files directory")
     parser.add_argument("--packets-directory", action="store", help="Provide directory of packet text files", required="true")
     parser.add_argument("--send-wait-time", action="store", type=float, default=0, help="Specify wait time in seconds between sending packets.")
-    parser.add_argument("--num-packets", action="store", type=int, default=10, help="Specify how many random packets to send.")
+    parser.add_argument("--num-packets", action="store", type=int, default=float('inf'), help="Specify how many random packets to send.")
     args = parser.parse_args()
 
     directory = args.packets_directory
@@ -63,16 +64,20 @@ def main():
     write_reg(SRR_ADDR, SRR_RST)
 
     # sending packets
-    for i in range(num_packets):
-        packet_file_index = random.random(0, len(packet_files_list) - 1)
+    iteration_count = 0
+    while (iteration_count < num_packets):
+        packet_file_index = random.randint(0, len(packet_files_list) - 1)
         file = packet_files_list[packet_file_index]
         num_words = get_file_size_in_words(file)
         num_vacant_words = read_reg(FIFO_VACANCY_ADDR)
+        print("num vacant words ::: " + str(num_vacant_words))
         while (num_words > num_vacant_words):
-            num_vacant_words = read_reg(FIFO_VACANCY_ADDR)    
+            num_vacant_words = read_reg(FIFO_VACANCY_ADDR)
+            print("num vacant words ::: " + str(num_vacant_words))    
         os.system(WRITE_FILE_CMD + file)
         if (wait_time > 0):
             time.sleep(wait_time)
+        iteration_count += 1 
 
 
 if __name__ == "__main__":
