@@ -1,0 +1,10 @@
+export SRR="0xA0011028"
+export TDFD="0xA0011010"
+export TLR="0xA0011014"
+export ISR="0xA0011000"
+export RDFO="0xA001101C"
+export RLR="0xA0011024"
+export RDFD="0xA0011020"
+export TFDV="0xA001100C"
+
+
