@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Good-ish shell script for reading the AXI-Stream FIFO and printing to terminal 
+# Good-ish shell script for reading the AXI-Stream FIFO and printing to a terminal 
 # output onto terminal is like this:
 
 # deadbeeffeedbadbcafedead
@@ -8,7 +8,7 @@
 . reg_names.sh # Load variable names
  
 #read the FIFO occupancy
-words=$(poke $RDFO | grep -Eo "0x[[:xdigit:]]+") 
+words=$(./spoke.sh $RDFO | grep -Eo "0x[[:xdigit:]]+") 
 
 START=1
 END=$(($words))
@@ -18,12 +18,12 @@ if [ $END -eq 0 ]; then
 	echo "RDFO is 0, no data read"
 else
 	#Read in the number of bytes that form the packet
-	numbytes=$(poke $RLR | grep -Eo "0x[[:xdigit:]]+")
+	numbytes=$(./spoke.sh $RLR | grep -Eo "0x[[:xdigit:]]+")
 	#We read in 4 bytes at a time
 	END=$(expr $(($numbytes)) '/' 4 )
 	#loop and read RDFD to receive packet data
 	for i in $(eval echo "{$START..$END}"); do
-		poke $RDFD | grep -Eo "0x[[:xdigit:]]+" | cut -c 3-
+		./spoke.sh $RDFD | grep -Eo "0x[[:xdigit:]]+" | cut -c 3-
 	done
 fi
 
