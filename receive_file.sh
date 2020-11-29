@@ -23,7 +23,8 @@ else
 	END=$(expr $(($numbytes)) '/' 4 )
 	#loop and read RDFD to receive packet data
 	for i in $(eval echo "{$START..$END}"); do
-		poke $RDFD | grep -Eo "0x[[:xdigit:]]+" | cut -c 3-
+		reg_read=$(poke $RDFD | grep -Eo "0x[[:xdigit:]]+")
+		printf "%08x\n" $reg_read
 	done
 fi
 
