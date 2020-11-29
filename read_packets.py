@@ -38,7 +38,7 @@ def main():
     if (args.pcap):
         # print(PcapWriter(packet))
         wrpcap(args.pcap, packet)
-        if (arg.pcap_print):
+        if (args.pcap_print):
             with open(args.pcap, 'rb') as file:
                 sys.stdout.buffer.write(file.read())
     if (not args.hexdump and not args.summary and not args.binary and not args.pcap):

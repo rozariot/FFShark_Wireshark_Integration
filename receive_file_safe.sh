@@ -5,10 +5,10 @@
 
 # deadbeeffeedbadbcafedead
 
-. reg_names.sh # Load variable names
+. /home/savi/kanver/ffshark_tut/reg_names.sh # Load variable names
  
 #read the FIFO occupancy
-words=$(./spoke.sh $RDFO | grep -Eo "0x[[:xdigit:]]+") 
+words=$(/home/savi/kanver/ffshark_tut/spoke.sh $RDFO | grep -Eo "0x[[:xdigit:]]+") 
 
 START=1
 END=$(($words))
@@ -18,12 +18,12 @@ if [ $END -eq 0 ]; then
 	echo "RDFO is 0, no data read"
 else
 	#Read in the number of bytes that form the packet
-	numbytes=$(./spoke.sh $RLR | grep -Eo "0x[[:xdigit:]]+")
+	numbytes=$(/home/savi/kanver/ffshark_tut/spoke.sh $RLR | grep -Eo "0x[[:xdigit:]]+")
 	#We read in 4 bytes at a time
 	END=$(expr $(($numbytes)) '/' 4 )
 	#loop and read RDFD to receive packet data
 	for i in $(eval echo "{$START..$END}"); do
-		./spoke.sh $RDFD | grep -Eo "0x[[:xdigit:]]+" | cut -c 3-
+		/home/savi/kanver/ffshark_tut/spoke.sh $RDFD | grep -Eo "0x[[:xdigit:]]+" | cut -c 3-
 	done
 fi
 
