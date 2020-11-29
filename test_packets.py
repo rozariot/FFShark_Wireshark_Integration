@@ -85,6 +85,7 @@ def main():
     parser.add_argument("--ip-dst", action="store", help="Set the IP destination address manually")
     parser.add_argument("--eth-src", action="store", help="Set the Ethernet source address manually")
     parser.add_argument("--eth-dst", action="store", help="Set the Ethernet destination address manually")
+    parser.add_argument("--transport-port", action="store", type=int, help="Set the UDP/TCP port number manually")
     args = parser.parse_args()
 
 
@@ -113,9 +114,15 @@ def main():
         return 1
 
     if (args.layer_transport == "UDP"):
-        transport_layer = UDP()
+        if (args.transport_port):
+            transport_layer = UDP(sport=args.transport_port, dport=args.transport_port)
+        else:
+            transport_layer = UDP()
     elif (args.layer_transport == "TCP"):
-        transport_layer = TCP()
+        if (args.transport_port):
+            transport_layer = TCP(sport=args.transport_port, dport=args.transport_port)
+        else:
+            transport_layer = TCP()
     else:
         sys.stderr.write("Error. Unrecognized transport layer")
         return 1
