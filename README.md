@@ -20,7 +20,7 @@
 
 `reg_names.sh` a script that loads the registers offsets for FFShark into a bash shell.
 
-`sendfilter` an exe that programs FFShark with a filter. Requires a .bpf file as input
+`sendfilter` an exe that programs FFShark with a filter. Requires a .bpf file as input.
 
 `compile_filter.py` gets a filtering instruction through sshdump, and calls the `compilefilt` executable generated from `compilefilt.c` source code to compile a .bpf file containing the filtering instructions. The .bpf file will then need to be sent to the fpga. This code is mainly just for testing how to send a filtering instruction to the ARM chip through SSHdump. 
 
