@@ -43,7 +43,7 @@ def main():
         for i in range(num_words_in_packet):
             data_word = axil_FIFO.read32(offset=FIFO_RDFD_OFFSET)
             print(hex(data_word))
-            file_str = file_str + format(data_word, 'x')
+            file_str = file_str + "{:08x}".format(data_word)
             
         print(file_str)
         packet = Ether(binascii.a2b_hex(file_str))
