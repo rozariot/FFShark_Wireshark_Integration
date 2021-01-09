@@ -6,6 +6,7 @@ import string
 import random
 import binascii
 import io
+import math
 from scapy.all import *
 from scapy.layers.http import *
 # import libmpsoc provided by Clark
@@ -36,9 +37,9 @@ def main():
         # read the number of bytes in a packet, this can be less than the num_words_in_FIFO
         num_bytes_in_packet = axil_FIFO.read32(offset=FIFO_RLR_OFFSET)
         print(num_bytes_in_packet)
-        # this rounds down to fix later for non-multiple of 8 packets
-        # use math.ceil() and convert to int with int() to fix i think
-        num_words_in_packet = int(num_bytes_in_packet/4)
+        # this rounds up so we read the next partial words
+        # currently this doesn't work as FFShark sends a copy of the 2nd last word
+        num_words_in_packet = int(math.ceil(num_bytes_in_packet/4))
         # read the data and convert to hex string
         for i in range(num_words_in_packet):
             data_word = axil_FIFO.read32(offset=FIFO_RDFD_OFFSET)

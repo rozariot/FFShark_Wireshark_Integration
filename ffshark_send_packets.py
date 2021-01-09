@@ -6,6 +6,7 @@ import random
 import sys
 import glob
 import time
+import math
 # import libmpsoc provided by Clark
 # make sure it's installed as python module by running sudo pip3 install libmpsoc
 # should already be installed but incase it isn't refer to above comment
@@ -27,11 +28,6 @@ FIFO_TLR_OFFSET = 0x14
 FIFO_SRR_OFFSET = 0x28
 FIFO_SRR_RST_VAL = 0xA5
 FIFO_DATA_WIDTH = 4 #in bytes
-
-def get_file_size_in_words(file):
-    size_bytes = os.path.getsize(file)
-    # divide by 8 because each hex char is UTF-8 so 1 byte but it represents only 4 bits so it's 2x the data 
-    return int(size_bytes/8) # convert to int so round down to to multiple of 8, fix later
 
 def main():
     parser = argparse.ArgumentParser(description="Sends packets randomly one by one to ffshark when given packet text files directory")
@@ -63,7 +59,10 @@ def main():
         # pick a random file
         packet_file_index = random.randint(0, len(packet_files_list) - 1)
         file = packet_files_list[packet_file_index]
-        num_words = get_file_size_in_words(file)
+        # get file size and round up to nearest word
+        size_bytes = os.path.getsize(file)
+        # divide by 8 because each hex char is UTF-8 so 1 byte but it represents only 4 bits so it's 2x the data
+        num_words = int(math.ceil(size_bytes/8))
         print(num_words)
         num_vacant_words = axil_FIFO.read32(offset=FIFO_TDFV_OFFSET)
         print("num vacant words ::: " + str(num_vacant_words))
@@ -78,10 +77,12 @@ def main():
                 print(hex(file_val))
                 print(axil_FIFO.write32(value=file_val,offset=FIFO_TDFD_OFFSET))
         # Write the number of bytes to TLR
-        print(axil_FIFO.write32(value=(num_words * 4),offset=FIFO_TLR_OFFSET))
+        # divide by 2 because each hex char is UTF-8 so 1 byte but it represents only 4 bits so it's 2x the data
+        print(int(math.ceil(size_bytes/2)))
+        print(axil_FIFO.write32(value=int(math.ceil(size_bytes/2)),offset=FIFO_TLR_OFFSET))
         if (wait_time > 0):
             time.sleep(wait_time)
-        iteration_count += 1 
+        iteration_count += 1
 
 
 if __name__ == "__main__":
