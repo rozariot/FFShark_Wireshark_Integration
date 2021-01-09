@@ -28,13 +28,6 @@ FIFO_SRR_OFFSET = 0x28
 FIFO_SRR_RST_VAL = 0xA5
 FIFO_DATA_WIDTH = 4 #in bytes
 
-# Commands
-# no longer used as poke is retired use libmpsoc instead
-# READ_CMD = "./spoke.sh"
-# WRITE_CMD = "./spoke.sh "
-# HIDE_OUTPUT = " > /dev/null"
-# WRITE_FILE_CMD = "./send_file_safe.sh "
-
 def get_file_size_in_words(file):
     size_bytes = os.path.getsize(file)
     # divide by 8 because each hex char is UTF-8 so 1 byte but it represents only 4 bits so it's 2x the data 
