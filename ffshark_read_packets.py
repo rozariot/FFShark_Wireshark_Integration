@@ -10,6 +10,8 @@ import math
 from scapy.all import *
 from scapy.layers.http import *
 import fcntl
+import argparse
+import compile_and_send_filter
 
 # import libmpsoc provided by Clark
 # make sure it's installed as python module by running sudo pip3 install libmpsoc
@@ -29,14 +31,25 @@ FIFO_DATA_WIDTH = 4 #in bytes
 # processes running on the FPGA
 LOCK_FILE = "/var/lock/pokelockfile"
 
+# Flag to enable debug messages
+DEBUG = 0
+
 def init_lock_file():
     if not os.path.exists(LOCK_FILE):
         os.system("touch " + LOCK_FILE)
 
 def main():
+    parser = argparse.ArgumentParser(description="Read FFShark Filtered packets and bring them onto Wireshark")  
+    parser.add_argument("--capture-filter", help="The capture filter")
+    args = parser.parse_args()
+    filter = args.capture_filter
+
     # initialize the lock
     init_lock_file()
     lock = open(LOCK_FILE, "r")
+    
+    if (filter):
+        compile_and_send_filter.compile_and_send_filter(filter)
 
     # init the axi lite mem map for FIFO
     fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
@@ -49,22 +62,32 @@ def main():
     fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
     num_words_in_FIFO = axil_FIFO.read32(offset=FIFO_RDFO_OFFSET)
     fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
-    #print("num words in fifo " + str(num_words_in_FIFO))
+    
+    if (DEBUG):
+        print("num words in fifo " + str(num_words_in_FIFO))
+    
     if (num_words_in_FIFO != 0):
         # read the number of bytes in a packet, this can be less than the num_words_in_FIFO
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
         num_bytes_in_packet = axil_FIFO.read32(offset=FIFO_RLR_OFFSET)
-        #print(num_bytes_in_packet)
+        if (DEBUG):
+            print(num_bytes_in_packet)
+        
         # this rounds up so we read the next partial words
         # currently this doesn't work as FFShark sends a copy of the 2nd last word
         num_words_in_packet = int(math.ceil(num_bytes_in_packet/4))
+        
         # read the data and convert to hex string
         for i in range(num_words_in_packet):
             data_word = axil_FIFO.read32(offset=FIFO_RDFD_OFFSET)
-            #print(hex(data_word))
+            if (DEBUG):
+                print(hex(data_word))
             file_str = file_str + "{:08x}".format(data_word)
-        fcntl.flock(lock.fileno(), fcntl.LOCK_UN)    
-        #print(file_str)
+        fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+        
+        if (DEBUG):
+            print(file_str)
+        
         packet = Ether(binascii.a2b_hex(file_str))
         wrpcap('test.pcap', packet)
         with open('test.pcap', 'rb') as file:
