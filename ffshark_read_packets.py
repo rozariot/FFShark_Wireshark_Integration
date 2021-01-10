@@ -41,8 +41,10 @@ def init_lock_file():
 def main():
     parser = argparse.ArgumentParser(description="Read FFShark Filtered packets and bring them onto Wireshark")  
     parser.add_argument("--capture-filter", help="The capture filter")
+    parser.add_argument("--num-iterations", action="store", type=float, default=float("inf"), help="Specify how many iterations the read should loop for.")
     args = parser.parse_args()
     filter = args.capture_filter
+    num_iterations = args.num_iterations
 
     # initialize the lock
     init_lock_file()
@@ -58,41 +60,47 @@ def main():
     
     file_str = ""
     
-    # check if Receive FIFO has packets to read, if not don't read
-    fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
-    num_words_in_FIFO = axil_FIFO.read32(offset=FIFO_RDFO_OFFSET)
-    fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
-    
-    if (DEBUG):
-        print("num words in fifo " + str(num_words_in_FIFO))
-    
-    if (num_words_in_FIFO != 0):
-        # read the number of bytes in a packet, this can be less than the num_words_in_FIFO
+    iter_count = 0
+    pcap_filename = 'test_0.pcap'
+    while (iter_count < num_iterations):
+        # check if Receive FIFO has packets to read, if not don't read
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
-        num_bytes_in_packet = axil_FIFO.read32(offset=FIFO_RLR_OFFSET)
-        if (DEBUG):
-            print(num_bytes_in_packet)
-        
-        # this rounds up so we read the next partial words
-        # currently this doesn't work as FFShark sends a copy of the 2nd last word
-        num_words_in_packet = int(math.ceil(num_bytes_in_packet/4))
-        
-        # read the data and convert to hex string
-        for i in range(num_words_in_packet):
-            data_word = axil_FIFO.read32(offset=FIFO_RDFD_OFFSET)
-            if (DEBUG):
-                print(hex(data_word))
-            file_str = file_str + "{:08x}".format(data_word)
+        num_words_in_FIFO = axil_FIFO.read32(offset=FIFO_RDFO_OFFSET)
         fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
         
         if (DEBUG):
-            print(file_str)
+            print("num words in fifo " + str(num_words_in_FIFO))
         
-        packet = Ether(binascii.a2b_hex(file_str))
-        wrpcap('test.pcap', packet)
-        with open('test.pcap', 'rb') as file:
-            sys.stdout.buffer.write(file.read())
-
+        if (num_words_in_FIFO != 0):
+            # read the number of bytes in a packet, this can be less than the num_words_in_FIFO
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            num_bytes_in_packet = axil_FIFO.read32(offset=FIFO_RLR_OFFSET)
+            if (DEBUG):
+                print(num_bytes_in_packet)
+            
+            # this rounds up so we read the next partial words
+            # currently this doesn't work as FFShark sends a copy of the 2nd last word
+            num_words_in_packet = int(math.ceil(num_bytes_in_packet/4))
+            
+            # read the data and convert to hex string
+            for i in range(num_words_in_packet):
+                data_word = axil_FIFO.read32(offset=FIFO_RDFD_OFFSET)
+                if (DEBUG):
+                    print(hex(data_word))
+                file_str = file_str + "{:08x}".format(data_word)
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+            
+            if (DEBUG):
+                print(file_str)
+            
+            packet = Ether(binascii.a2b_hex(file_str))
+            wrpcap(pcap_filename, packet)
+            with open(pcap_filename, 'rb') as file:
+                sys.stdout.buffer.write(file.read())
+        
+        iter_count += 1
+        file_str = ""
+        pcap_filename = pcap_filename.replace(str(iter_count - 1), str(iter_count))
 
 if __name__ == "__main__":
     main()

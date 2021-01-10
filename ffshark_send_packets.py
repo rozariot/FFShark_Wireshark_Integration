@@ -43,7 +43,7 @@ def main():
     parser = argparse.ArgumentParser(description="Sends packets randomly one by one to ffshark when given packet text files directory")
     parser.add_argument("--packets-directory", action="store", help="Provide directory of packet text files", required="true")
     parser.add_argument("--send-wait-time", action="store", type=float, default=0, help="Specify wait time in seconds between sending packets.")
-    parser.add_argument("--num-packets", action="store", type=int, default=0, help="Specify how many random packets to send.")
+    parser.add_argument("--num-packets", action="store", type=float, default=float("inf"), help="Specify how many random packets to send.")
     args = parser.parse_args()
 
     directory = args.packets_directory
