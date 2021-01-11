@@ -19,7 +19,7 @@ import compile_and_send_filter
 import libmpsoc as mp
 
 # Register constants
-# The base addr can vary depending on FFShark and PS config, we really shouldn't hard code 
+# The base addr can vary depending on FFShark and PS config, we really shouldn't hard code
 FIFO_BASE = 0xA0011000
 FIFO_SIZE = 0x1000 # 4KB mem map region
 FIFO_RDFO_OFFSET = 0x1C
@@ -27,7 +27,7 @@ FIFO_RDFD_OFFSET = 0x20
 FIFO_RLR_OFFSET = 0x24
 FIFO_DATA_WIDTH = 4 #in bytes
 
-# Lock file used to maintain thread safety for multiple 
+# Lock file used to maintain thread safety for multiple
 # processes running on the FPGA
 LOCK_FILE = "/var/lock/pokelockfile"
 
@@ -39,7 +39,7 @@ def init_lock_file():
         os.system("touch " + LOCK_FILE)
 
 def main():
-    parser = argparse.ArgumentParser(description="Read FFShark Filtered packets and bring them onto Wireshark")  
+    parser = argparse.ArgumentParser(description="Read FFShark Filtered packets and bring them onto Wireshark")
     parser.add_argument("--capture-filter", help="The capture filter")
     parser.add_argument("--num-iterations", action="store", type=float, default=float("inf"), help="Specify how many iterations the read should loop for.")
     args = parser.parse_args()
@@ -49,7 +49,7 @@ def main():
     # initialize the lock
     init_lock_file()
     lock = open(LOCK_FILE, "r")
-    
+
     if (filter):
         compile_and_send_filter.compile_and_send_filter(filter)
 
@@ -57,9 +57,9 @@ def main():
     fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
     axil_FIFO = mp.axilite(addr=FIFO_BASE,size=FIFO_SIZE)
     fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
-    
+
     file_str = ""
-    
+
     iter_count = 0
     pcap_filename = 'test_0.pcap'
     while (iter_count < num_iterations):
@@ -67,21 +67,21 @@ def main():
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
         num_words_in_FIFO = axil_FIFO.read32(offset=FIFO_RDFO_OFFSET)
         fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
-        
+
         if (DEBUG):
             print("num words in fifo " + str(num_words_in_FIFO))
-        
+
         if (num_words_in_FIFO != 0):
             # read the number of bytes in a packet, this can be less than the num_words_in_FIFO
             fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
             num_bytes_in_packet = axil_FIFO.read32(offset=FIFO_RLR_OFFSET)
             if (DEBUG):
                 print(num_bytes_in_packet)
-            
+
             # this rounds up so we read the next partial words
             # currently this doesn't work as FFShark sends a copy of the 2nd last word
             num_words_in_packet = int(math.ceil(num_bytes_in_packet/4))
-            
+
             # read the data and convert to hex string
             for i in range(num_words_in_packet):
                 data_word = axil_FIFO.read32(offset=FIFO_RDFD_OFFSET)
@@ -89,15 +89,20 @@ def main():
                     print(hex(data_word))
                 file_str = file_str + "{:08x}".format(data_word)
             fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
-            
+
             if (DEBUG):
                 print(file_str)
-            
+
             packet = Ether(binascii.a2b_hex(file_str))
             wrpcap(pcap_filename, packet)
             with open(pcap_filename, 'rb') as file:
-                sys.stdout.buffer.write(file.read())
-        
+                if (iter_count == 0):
+                    sys.stdout.buffer.write(file.read())
+                else:
+                    # Need to get rid of the "global header" portion which is 24 bytes
+                    stripped = file.read()[24:]
+                    sys.stdout.buffer.write(stripped)
+
         iter_count += 1
         file_str = ""
         pcap_filename = pcap_filename.replace(str(iter_count - 1), str(iter_count))
