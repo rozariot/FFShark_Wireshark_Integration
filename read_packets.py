@@ -17,6 +17,7 @@ def main():
     parser.add_argument("--binary", action="store_true", help="Outputs the packet as binary")
     parser.add_argument("--pcap", action="store", help="Output as PCAP file format to file provided as argument.")
     parser.add_argument("--pcap-print", action="store_true", help="If pcap option selected above, also print the pcap to stdout.")
+    parser.add_argument("--skip-header", action="store_true", help="If pcap-print option selected above, will not print the header portion.")
     parser.add_argument("filename", action="store", help="The file where packet is stored")
 
     args = parser.parse_args()
@@ -40,7 +41,11 @@ def main():
         wrpcap(args.pcap, packet)
         if (args.pcap_print):
             with open(args.pcap, 'rb') as file:
-                sys.stdout.buffer.write(file.read())
+                if (args.skip_header):
+                    stripped = file.read()[24:]
+                    sys.stdout.buffer.write(stripped)
+                else:
+                    sys.stdout.buffer.write(file.read())
     if (not args.hexdump and not args.summary and not args.binary and not args.pcap):
         packet.show2()
 
