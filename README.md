@@ -45,8 +45,6 @@ More info on running sshdump in general can be found [here](https://docs.google.
 ## Issues
 - Right now we're writing the PCAP file to an actual file first, then reading it and printing to terminal. This seems unecessary and we should see if we can print directly.
 
-- Have only tried with one packet at a time. How to do two packets?
-
 - savi only has scapy installed for Python3 so need to use that version. I mostly tested using Python2.7, so there could be some new bugs due to different versions. pip is not installed on savi, so I'd need to install it if we want it to run in Python2.7
 
 
