@@ -37,7 +37,7 @@
 ### Running two packets
 
 To run two packets, you need to get rid of the "global header" portion of the PCAP file, i.e., the first 24 bytes. Using the `read_packets.py` script, this can be accomplished by using the `--skip-header` option. Example command for sshdump:
-python3 /home/savi/alex/FFShark_Wireshark_Integration/read_packets.py --pcap /home/savi/alex/test_pcap/test.pcap --pcap-print /home/savi/alex/FFShark_Wireshark_Integration/sample_packets/ipv4_udp_http_100_to_1000_3.txt; python3 /home/savi/alex/FFShark_Wireshark_Integration/read_packets.py --pcap /home/savi/alex/FFShark_Wireshark_Integration/test.pcap --pcap-print /home/savi/alex/FFShark_Wireshark_Integration/sample_packets/ipv4_udp_http_100_to_1000_4.txt --skip-header`
+`python3 /home/savi/alex/FFShark_Wireshark_Integration/read_packets.py --pcap /home/savi/alex/test_pcap/test.pcap --pcap-print /home/savi/alex/FFShark_Wireshark_Integration/sample_packets/ipv4_udp_http_100_to_1000_3.txt; python3 /home/savi/alex/FFShark_Wireshark_Integration/read_packets.py --pcap /home/savi/alex/FFShark_Wireshark_Integration/test.pcap --pcap-print /home/savi/alex/FFShark_Wireshark_Integration/sample_packets/ipv4_udp_http_100_to_1000_4.txt --skip-header`
 
 More info on running sshdump in general can be found [here](https://docs.google.com/document/d/1tAU0yALlJpX_4MjLjqu0NCp0u5kci2d9fFfR4BA_2AM/edit?usp=sharing).
 
