@@ -32,7 +32,7 @@ FIFO_DATA_WIDTH = 4 #in bytes
 LOCK_FILE = "/var/lock/pokelockfile"
 
 # Flag to enable debug messages
-DEBUG = 0
+# DEBUG = 0
 
 def init_lock_file():
     if not os.path.exists(LOCK_FILE):
@@ -42,6 +42,7 @@ def main():
     parser = argparse.ArgumentParser(description="Read FFShark Filtered packets and bring them onto Wireshark")
     parser.add_argument("--capture-filter", help="The capture filter")
     parser.add_argument("--num-iterations", action="store", type=float, default=float("inf"), help="Specify how many iterations the read should loop for.")
+    parser.add_argument("--debug", action="store_true", help="Increase output verbosity")
     args = parser.parse_args()
     filter = args.capture_filter
     num_iterations = args.num_iterations
@@ -68,14 +69,14 @@ def main():
         num_words_in_FIFO = axil_FIFO.read32(offset=FIFO_RDFO_OFFSET)
         fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
-        if (DEBUG):
+        if (args.debug):
             print("num words in fifo " + str(num_words_in_FIFO))
 
         if (num_words_in_FIFO != 0):
             # read the number of bytes in a packet, this can be less than the num_words_in_FIFO
             fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
             num_bytes_in_packet = axil_FIFO.read32(offset=FIFO_RLR_OFFSET)
-            if (DEBUG):
+            if (args.debug):
                 print(num_bytes_in_packet)
 
             # this rounds up so we read the next partial words
@@ -85,12 +86,12 @@ def main():
             # read the data and convert to hex string
             for i in range(num_words_in_packet):
                 data_word = axil_FIFO.read32(offset=FIFO_RDFD_OFFSET)
-                if (DEBUG):
+                if (args.debug):
                     print(hex(data_word))
                 file_str = file_str + "{:08x}".format(data_word)
             fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
-            if (DEBUG):
+            if (args.debug):
                 print(file_str)
 
             packet = Ether(binascii.a2b_hex(file_str))
@@ -103,9 +104,9 @@ def main():
                     stripped = file.read()[24:]
                     sys.stdout.buffer.write(stripped)
 
-        iter_count += 1
+            iter_count += 1
         file_str = ""
-        pcap_filename = pcap_filename.replace(str(iter_count - 1), str(iter_count))
+        # pcap_filename = pcap_filename.replace(str(iter_count - 1), str(iter_count))
 
 if __name__ == "__main__":
     main()

@@ -42,10 +42,28 @@ To run two packets, you need to get rid of the "global header" portion of the PC
 More info on running sshdump in general can be found [here](https://docs.google.com/document/d/1tAU0yALlJpX_4MjLjqu0NCp0u5kci2d9fFfR4BA_2AM/edit?usp=sharing).
 
 
+## Running FFShark with Wireshark Guide
+
+1. Ensure no one else using mpsoc
+2. On MPSoC,
+```
+sudo su
+set_clocks 100
+program ffshark_fifo.bin
+exit
+```
+3. On MPSoC, send in packets `python3 ffshark_send_packets.py --packets-directory sample_packets/multiple_8  --num-packets 100`
+4. On sshdump interface in Wireshark, set capture command to `python3 /home/savi/alex/FFShark_Wireshark_Integration/ffshark_read_packets.py`
+
+### Debug log of issue with multiple packets
+Issue was the read script increased iteration even if no packet was read. This meant we would always skip header if starting later.
+
 ## Issues
+- Wireshark doesn't display all the packets right away. If I send in 100, it'll show like 80. Then if I send another 100, it'll show the missing 20 plus most of the new ones. Not sure what issue is.
+- Doesn't look like we ever clean up the interface in ffshark_send/read_packets.py. Should call axilite.clean() at some point. How will interrupts work? Is it safe.
+- Still not certain we don't ocassionally hang the board. Is something not thread safe??
 - Right now we're writing the PCAP file to an actual file first, then reading it and printing to terminal. This seems unecessary and we should see if we can print directly.
 
-- savi only has scapy installed for Python3 so need to use that version. I mostly tested using Python2.7, so there could be some new bugs due to different versions. pip is not installed on savi, so I'd need to install it if we want it to run in Python2.7
 
 
 ## Useful links

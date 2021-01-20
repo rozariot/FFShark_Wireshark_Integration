@@ -10,7 +10,8 @@ import random
 import binascii
 
 
-def main():
+
+def main(args):
     parser = argparse.ArgumentParser(description="Reads one random packet from a file as hex. No arguments will print packet in human readable form")
     parser.add_argument("--hexdump", action="store_true", help="Prints a hexdump of the packet")
     parser.add_argument("--summary", action="store_true", help="Prints a summary of the packet")
@@ -20,7 +21,7 @@ def main():
     parser.add_argument("--skip-header", action="store_true", help="If pcap-print option selected above, will not print the header portion.")
     parser.add_argument("filename", action="store", help="The file where packet is stored")
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     if (not os.path.isfile(args.filename)):
         sys.stderr.write("Error. Provided input file does not exist")
@@ -54,5 +55,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
 

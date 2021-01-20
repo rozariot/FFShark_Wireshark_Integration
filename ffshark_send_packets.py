@@ -15,10 +15,10 @@ import fcntl
 import libmpsoc as mp
 
 # The following script randomly selects packets from a directory containing packet text files to ffshark. It will check if the fifo has
-# enough space for txt file packet. 
+# enough space for txt file packet.
 
 # Register constants
-# The base addr can vary depending on FFShark and PS config, we really shouldn't hard code 
+# The base addr can vary depending on FFShark and PS config, we really shouldn't hard code
 FFSHARK_BASE = 0xA0010000
 FFSHARK_SIZE = 0x1000 # 4KB mem map region
 FFSHARK_ENABLE_OFFSET = 0x4
@@ -31,7 +31,7 @@ FIFO_SRR_OFFSET = 0x28
 FIFO_SRR_RST_VAL = 0xA5
 FIFO_DATA_WIDTH = 4 #in bytes
 
-# Lock file used to maintain thread safety for multiple 
+# Lock file used to maintain thread safety for multiple
 # processes running on the FPGA
 LOCK_FILE = "/var/lock/pokelockfile"
 
@@ -44,6 +44,7 @@ def main():
     parser.add_argument("--packets-directory", action="store", help="Provide directory of packet text files", required="true")
     parser.add_argument("--send-wait-time", action="store", type=float, default=0, help="Specify wait time in seconds between sending packets.")
     parser.add_argument("--num-packets", action="store", type=float, default=float("inf"), help="Specify how many random packets to send.")
+    parser.add_argument("--debug", action="store_true", help="Enable for more verbosity")
     args = parser.parse_args()
 
     directory = args.packets_directory
@@ -69,7 +70,7 @@ def main():
     print(axil_FFShark.write32(value=0x1,offset=FFSHARK_ENABLE_OFFSET))
     print(axil_FIFO.write32(value=FIFO_SRR_RST_VAL,offset=FIFO_SRR_OFFSET))
 
-    fcntl.flock(lock.fileno(), fcntl.LOCK_UN)	
+    fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
     # sending packets
     iteration_count = 0
@@ -81,29 +82,35 @@ def main():
         size_bytes = os.path.getsize(file)
         # divide by 8 because each hex char is UTF-8 so 1 byte but it represents only 4 bits so it's 2x the data
         num_words = int(math.ceil(size_bytes/8))
-        print(num_words)
+        if (args.debug):
+            print(num_words)
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
         num_vacant_words = axil_FIFO.read32(offset=FIFO_TDFV_OFFSET)
         fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
-        print("num vacant words ::: " + str(num_vacant_words))
+        if (args.debug):
+            print("num vacant words ::: " + str(num_vacant_words))
         # check if the FIFO has enough space for the packet and if not wait
         while (num_words > num_vacant_words):
             fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
             num_vacant_words = axil_FIFO.read32(offset=FIFO_TDFV_OFFSET)
             fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
-            print("num vacant words ::: " + str(num_vacant_words)) 
+            print("num vacant words ::: " + str(num_vacant_words))
         # write the packet a word at a time
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
         with open(file) as f:
             for i in range(num_words):
                 file_val = int(f.read(8),16)
-                print(hex(file_val))
-                print(axil_FIFO.write32(value=file_val,offset=FIFO_TDFD_OFFSET))
+                axil_out = axil_FIFO.write32(value=file_val,offset=FIFO_TDFD_OFFSET)
+                if (args.debug):
+                    print(hex(file_val))
+                    print(axil_out)
         # Write the number of bytes to TLR
         # divide by 2 because each hex char is UTF-8 so 1 byte but it represents only 4 bits so it's 2x the data
-        print(int(math.ceil(size_bytes/2)))
-        print(axil_FIFO.write32(value=int(math.ceil(size_bytes/2)),offset=FIFO_TLR_OFFSET))
-        fcntl.flock(lock.fileno(), fcntl.LOCK_UN)        
+        axil_out = axil_FIFO.write32(value=int(math.ceil(size_bytes/2)),offset=FIFO_TLR_OFFSET)
+        if (args.debug):
+            print(int(math.ceil(size_bytes/2)))
+            print(axil_out)
+        fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
         if (wait_time > 0):
             time.sleep(wait_time)
         iteration_count += 1
