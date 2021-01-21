@@ -99,10 +99,12 @@ def main():
             with open(pcap_filename, 'rb') as file:
                 if (iter_count == 0):
                     sys.stdout.buffer.write(file.read())
+                    sys.stdout.flush()
                 else:
                     # Need to get rid of the "global header" portion which is 24 bytes
                     stripped = file.read()[24:]
                     sys.stdout.buffer.write(stripped)
+                    sys.stdout.flush()
 
             iter_count += 1
         file_str = ""

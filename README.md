@@ -54,12 +54,13 @@ exit
 ```
 3. On MPSoC, send in packets `python3 ffshark_send_packets.py --packets-directory sample_packets/multiple_8  --num-packets 100`
 4. On sshdump interface in Wireshark, set capture command to `python3 /home/savi/alex/FFShark_Wireshark_Integration/ffshark_read_packets.py`
+5. Once done using MPSoC, send message in Slack to say done using.
 
 ### Debug log of issue with multiple packets
 Issue was the read script increased iteration even if no packet was read. This meant we would always skip header if starting later.
 
 ## Issues
-- Wireshark doesn't display all the packets right away. If I send in 100, it'll show like 80. Then if I send another 100, it'll show the missing 20 plus most of the new ones. Not sure what issue is.
+
 - Doesn't look like we ever clean up the interface in ffshark_send/read_packets.py. Should call axilite.clean() at some point. How will interrupts work? Is it safe.
 - Still not certain we don't ocassionally hang the board. Is something not thread safe??
 - Right now we're writing the PCAP file to an actual file first, then reading it and printing to terminal. This seems unecessary and we should see if we can print directly.
