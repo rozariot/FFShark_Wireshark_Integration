@@ -53,7 +53,7 @@ program ffshark_fifo.bin
 exit
 ```
 3. On MPSoC, send in packets `python3 ffshark_send_packets.py --packets-directory sample_packets/multiple_8  --num-packets 100`
-4. On sshdump interface in Wireshark, set capture command to `python3 /home/savi/alex/FFShark_Wireshark_Integration/ffshark_read_packets.py`
+4. On sshdump interface in Wireshark, set capture command to `python3 /home/savi/alex/FFShark_Wireshark_Integration/ffshark_read_packets.py`. Can also add a filter like `python3 /home/savi/alex/FFShark_Wireshark_Integration/ffshark_read_packets.py --capture-filter=udp` or set to "tcp".
 5. Once done using MPSoC, send message in Slack to say done using.
 
 ### Debug log of issue with multiple packets
