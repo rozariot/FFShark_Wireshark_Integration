@@ -12,6 +12,7 @@ from scapy.layers.http import *
 import fcntl
 import argparse
 import compile_and_send_filter
+import time
 
 # import libmpsoc provided by Clark
 # make sure it's installed as python module by running sudo pip3 install libmpsoc
@@ -43,8 +44,11 @@ def main():
     parser.add_argument("--capture-filter", help="The capture filter")
     parser.add_argument("--num-iterations", action="store", type=float, default=float("inf"), help="Specify how many iterations the read should loop for.")
     parser.add_argument("--debug", action="store_true", help="Increase output verbosity")
+    parser.add_argument("--perf-test", action="store_true", help="measure performance")
+    
     args = parser.parse_args()
     filter = args.capture_filter
+    perf_test = args.perf_test
     num_iterations = args.num_iterations
 
     # initialize the lock
@@ -63,6 +67,11 @@ def main():
 
     iter_count = 0
     pcap_filename = 'test_0.pcap'
+    
+    if (perf_test):
+        start_time = time.time()
+        total_bytes = 0;
+        
     while (iter_count < num_iterations):
         # check if Receive FIFO has packets to read, if not don't read
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
@@ -107,8 +116,16 @@ def main():
                     sys.stdout.flush()
 
             iter_count += 1
+            if (perf_test):
+                total_bytes += num_bytes_in_packet
         file_str = ""
         # pcap_filename = pcap_filename.replace(str(iter_count - 1), str(iter_count))
+        
+    if (perf_test):
+        total_time = time.time() - start_time
+        bit_rate = (total_bytes * 8) / total_time
+        print("Total time : " + str(total_time))
+        print("Data rate : " + str(bit_rate) + " bits/second")
 
 if __name__ == "__main__":
     main()
