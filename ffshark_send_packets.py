@@ -45,11 +45,13 @@ def main():
     parser.add_argument("--send-wait-time", action="store", type=float, default=0, help="Specify wait time in seconds between sending packets.")
     parser.add_argument("--num-packets", action="store", type=float, default=float("inf"), help="Specify how many random packets to send.")
     parser.add_argument("--debug", action="store_true", help="Enable for more verbosity")
+    parser.add_argument("--perf-test", action="store_true", help="measure performance")
     args = parser.parse_args()
 
     directory = args.packets_directory
     wait_time = args.send_wait_time
     num_packets = args.num_packets
+    perf_test = args.perf_test
 
     directory = args.packets_directory
     assert(os.path.exists(directory)), "directory doesn't exist"
@@ -72,6 +74,10 @@ def main():
 
     fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
+    if (perf_test):
+        start_time = time.time()
+        total_bytes = 0;
+
     # sending packets
     iteration_count = 0
     while (iteration_count < num_packets):
@@ -80,10 +86,15 @@ def main():
         file = packet_files_list[packet_file_index]
         # get file size and round up to nearest word
         size_bytes = os.path.getsize(file)
+        
+        if (perf_test):
+            total_bytes += size_bytes
+        
         # divide by 8 because each hex char is UTF-8 so 1 byte but it represents only 4 bits so it's 2x the data
         num_words = int(math.ceil(size_bytes/8))
         if (args.debug):
             print(num_words)
+            print(size_bytes)
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
         num_vacant_words = axil_FIFO.read32(offset=FIFO_TDFV_OFFSET)
         fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
@@ -114,6 +125,12 @@ def main():
         if (wait_time > 0):
             time.sleep(wait_time)
         iteration_count += 1
+        
+    if (perf_test):
+        total_time = time.time() - start_time
+        bit_rate = (total_bytes * 8) / total_time
+        print("Total time : " + str(total_time))
+        print("Data rate : " + str(bit_rate) + " bits/second")
 
 
 if __name__ == "__main__":
