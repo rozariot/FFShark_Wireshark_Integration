@@ -76,7 +76,10 @@ def main():
 
     if (perf_test):
         start_time = time.time()
-        total_bytes = 0;
+        total_bytes = 0
+        total_write_time = 0
+        file_read_time = 0
+        write_word_no_lock_time = 0
 
     # sending packets
     iteration_count = 0
@@ -88,7 +91,7 @@ def main():
         size_bytes = os.path.getsize(file)
         
         if (perf_test):
-            total_bytes += size_bytes
+            total_bytes += size_bytes            
         
         # divide by 8 because each hex char is UTF-8 so 1 byte but it represents only 4 bits so it's 2x the data
         num_words = int(math.ceil(size_bytes/8))
@@ -100,21 +103,36 @@ def main():
         fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
         if (args.debug):
             print("num vacant words ::: " + str(num_vacant_words))
+        
         # check if the FIFO has enough space for the packet and if not wait
         while (num_words > num_vacant_words):
             fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
             num_vacant_words = axil_FIFO.read32(offset=FIFO_TDFV_OFFSET)
             fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
             print("num vacant words ::: " + str(num_vacant_words))
+        
         # write the packet a word at a time
+        if (perf_test):
+            write_time = time.time()
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
         with open(file) as f:
             for i in range(num_words):
+                if (perf_test):
+                    file_time = time.time()
                 file_val = int(f.read(8),16)
+                if (perf_test):
+                    file_read_time += time.time() - file_time               
+                
+                if (perf_test):
+                    write_no_lock_time = time.time()
                 axil_out = axil_FIFO.write32(value=file_val,offset=FIFO_TDFD_OFFSET)
+                if (perf_test):
+                    write_word_no_lock_time += time.time() - write_no_lock_time                
+                
                 if (args.debug):
                     print(hex(file_val))
                     print(axil_out)
+        
         # Write the number of bytes to TLR
         # divide by 2 because each hex char is UTF-8 so 1 byte but it represents only 4 bits so it's 2x the data
         axil_out = axil_FIFO.write32(value=int(math.ceil(size_bytes/2)),offset=FIFO_TLR_OFFSET)
@@ -122,6 +140,10 @@ def main():
             print(int(math.ceil(size_bytes/2)))
             print(axil_out)
         fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+        if (perf_test):
+            total_write_time += time.time() - write_time
+            
+        
         if (wait_time > 0):
             time.sleep(wait_time)
         iteration_count += 1
@@ -129,8 +151,12 @@ def main():
     if (perf_test):
         total_time = time.time() - start_time
         bit_rate = (total_bytes * 8) / total_time
+        write_bit_rate = (total_bytes * 8) / total_write_time
         print("Total time : " + str(total_time))
-        print("Data rate : " + str(bit_rate) + " bits/second")
+        print("Write time : " + str(total_write_time))
+        print("Write with no Locking time: " + str(write_word_no_lock_time))
+        print("File read time: " + str(file_read_time))
+        print("Total Data rate : " + str(bit_rate) + " bits/second")
 
 
 if __name__ == "__main__":
