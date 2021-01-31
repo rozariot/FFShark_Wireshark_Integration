@@ -70,7 +70,11 @@ def main():
     
     if (perf_test):
         start_time = time.time()
-        total_bytes = 0;
+        total_bytes = 0
+        fifo_read_time_no_lock = 0
+        print_to_terminal_time = 0
+        pcap_format_time = 0
+        binascii_convert_time = 0
         
     while (iter_count < num_iterations):
         # check if Receive FIFO has packets to read, if not don't read
@@ -94,7 +98,12 @@ def main():
 
             # read the data and convert to hex string
             for i in range(num_words_in_packet):
+                if (perf_test):
+                    read_fifo_start = time.time()                
                 data_word = axil_FIFO.read32(offset=FIFO_RDFD_OFFSET)
+                if (perf_test):
+                    fifo_read_time_no_lock += time.time() - read_fifo_start
+                    
                 if (args.debug):
                     print(hex(data_word))
                 file_str = file_str + "{:08x}".format(data_word)
@@ -103,8 +112,20 @@ def main():
             if (args.debug):
                 print(file_str)
 
+            if (perf_test):
+                binascii_start = time.time()
             packet = Ether(binascii.a2b_hex(file_str))
-            wrpcap(pcap_filename, packet)
+            if (perf_test):
+                binascii_convert_time += time.time() - binascii_start
+
+            if (perf_test):
+                wrpcap_start = time.time()  
+            wrpcap(pcap_filename, packet)  
+            if (perf_test):
+                pcap_format_time += time.time() - wrpcap_start
+            
+            if (perf_test):
+                terminal_print_start = time.time() 
             with open(pcap_filename, 'rb') as file:
                 if (iter_count == 0):
                     sys.stdout.buffer.write(file.read())
@@ -114,17 +135,23 @@ def main():
                     stripped = file.read()[24:]
                     sys.stdout.buffer.write(stripped)
                     sys.stdout.flush()
+            if (perf_test):
+                print_to_terminal_time += time.time() - terminal_print_start
 
             iter_count += 1
             if (perf_test):
                 total_bytes += num_bytes_in_packet
         file_str = ""
-        # pcap_filename = pcap_filename.replace(str(iter_count - 1), str(iter_count))
         
     if (perf_test):
         total_time = time.time() - start_time
         bit_rate = (total_bytes * 8) / total_time
+        print("")
         print("Total time : " + str(total_time))
+        print("Fifo read time without locking : " + str(fifo_read_time_no_lock))
+        print("Printing to terminal time : " + str(print_to_terminal_time))
+        print("ascii to bin conversion time : " + str(binascii_convert_time))
+        print("PCAP formatting time : " + str(pcap_format_time))
         print("Data rate : " + str(bit_rate) + " bits/second")
 
 if __name__ == "__main__":
