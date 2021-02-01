@@ -12,14 +12,16 @@
 
 
 typedef struct {
-    int size;
+    unsigned size;
     int fd;
     void *map_base;
     long page_size;
 } AXILITE; 
 
-void init_axilite(AXILITE *axilite_handler, int addr, int size);
+void init_axilite(AXILITE *axilite_handler, unsigned addr, unsigned size);
 
+unsigned read_axilite(AXILITE *axilite_handler, unsigned offset);
 
+void write_axilite(AXILITE *axilite_handler, unsigned offset, unsigned data);
 
 #endif
