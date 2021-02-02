@@ -1,7 +1,7 @@
 DBG=-DDEBUG_ON
 
-read_fifo: *.h *.c
-	gcc -g ${DBG} -Wall -fno-diagnostics-show-caret -o read_fifo *.c -lpthread -lm
+ffshark_send_packets: *.h *.c
+	gcc -g ${DBG} -Wall -fno-diagnostics-show-caret -o ffshark_send_packets *.c -lpthread -lm
 
 clean:
-	rm -rf read_fifo
+	rm -rf ffshark_send_packets
