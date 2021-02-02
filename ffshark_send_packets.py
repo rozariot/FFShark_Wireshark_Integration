@@ -150,8 +150,8 @@ def main():
         
     if (perf_test):
         total_time = time.time() - start_time
-        bit_rate = (total_bytes * 8) / total_time
-        write_bit_rate = (total_bytes * 8) / total_write_time
+        bit_rate = ((total_bytes/2) * 8) / total_time
+        write_bit_rate = ((total_bytes/2) * 8) / total_write_time
         print("Total time : " + str(total_time))
         print("Write time : " + str(total_write_time))
         print("Write with no Locking time: " + str(write_word_no_lock_time))
