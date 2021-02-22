@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <inttypes.h>
 
 // Register constants
 // The base addr can vary depending on FFShark and PS config, we really shouldn't hard code
@@ -20,7 +21,7 @@
 #define FIFO_SRR_RST_VAL 0xA5
 #define FIFO_DATA_WIDTH 4 //in bytes
 
-#define num_packets 3 //will need to set this as a user parameter later
+#define num_packets 100 //will need to set this as a user parameter later
 
 char directory_pattern[] = "/home/savi/tobias/ffshark_tut/sample_packets/multiple_8/*.txt"; //will need to set this user parameter later
 
@@ -56,7 +57,15 @@ int main(int argc, char **argv) {
     word_buffer[0] = '0';
     word_buffer[1] = 'x';
         
-    srand(time(NULL));    
+    srand(time(NULL));
+
+    //for profiling    
+    double total_bytes = 0;
+    double file_read_time = 0;
+    double total_write_time = 0;
+    double write_word_no_lock_time = 0;
+    clock_t start_time = clock();
+    
     while(iteration_count < num_packets){
         
         //choose random packet file 
@@ -67,7 +76,8 @@ int main(int argc, char **argv) {
         }
         
         //divide by 8 because each hex char is UTF-8 so 1 byte but it represents only 4 bits so it's 2x the data
-        num_words = st.st_size / 8; 
+        num_words = st.st_size / 8;
+        total_bytes += st.st_size / 2;        
         
         //check if FIFO has enough space for packet
         num_vacant_words = read_axilite(&axil_fifo, FIFO_TDFV_OFFSET);
@@ -82,17 +92,38 @@ int main(int argc, char **argv) {
             printf("file open failed");
             return -1;
         }
+        
+        clock_t write_start = clock();
         while (fread(&word_buffer[2], 8, 1, fp) > 0){
+            //profile the amount of time to read out packet file
+            clock_t file_start_time = clock();
             packet_data = strtoul(word_buffer, NULL, 0);
+            file_read_time += (double) (clock() - file_start_time)/(CLOCKS_PER_SEC/1000000);
+            
+            //profile register writing time
+            clock_t write_word_start = clock();
             write_axilite(&axil_fifo, FIFO_TDFD_OFFSET, packet_data);
+            write_word_no_lock_time += (clock() - write_word_start)/(CLOCKS_PER_SEC/1000000);
         }
+        
         
         //Write the number of bytes to TLR
         //divide by 2 because each hex char is UTF-8 so 1 byte but it represents only 4 bits so it's 2x the data
         write_axilite(&axil_fifo, FIFO_TLR_OFFSET, (unsigned)(st.st_size / 2));
+        total_write_time += (double)(clock() - write_start)/(CLOCKS_PER_SEC/1000000);
         
         iteration_count+=1;
         
     }
+    
+    //print out profiling data
+    clock_t end_time = clock();    
+    double total_time = (double) (end_time - start_time)/(CLOCKS_PER_SEC/1000000);
+    double bit_rate = ((total_bytes * 8)/total_time) * 1000000;
+    printf("Total time : %f seconds\n", total_time / 1000000 );
+    printf("Write time : %f seconds\n ", total_write_time / 1000000);
+    printf("Write with no locking time : %f seconds\n ", write_word_no_lock_time / 1000000);
+    printf("File read time: %f seconds\n", file_read_time / 1000000);
+    printf("Bit rate : %f bits per second \n", bit_rate);
 
 }
