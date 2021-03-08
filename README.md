@@ -56,11 +56,26 @@ exit
 4. On sshdump interface in Wireshark, set capture command to `python3 /home/savi/alex/FFShark_Wireshark_Integration/ffshark_read_packets.py`. Can also add a filter like `python3 /home/savi/alex/FFShark_Wireshark_Integration/ffshark_read_packets.py --capture-filter=udp` or set to "tcp".
 5. Once done using MPSoC, send message in Slack to say done using.
 
+## Verifying Correct Packets
+
+1. Run `ffshark_send_packets.py` with the `--save-sent-packets` option. E.g. `python3 ffshark_send_packets.py --packets-directory sample_packets/multiple_8  --num-packets 100 --save-sent-packets "saved_packets.log"`
+2. On Wireshark, go to "File->Export Packet Dissections->As Plaintext". Then select "Bytes" as Packet Format and deselect the other two options.
+3. Save this file. E.g. "received_packets.txt".
+4. Copy over the sent file from MPSoC to the Wireshark machine. `scp savi@10.10.14.215:/home/savi/alex/FFShark_Wireshark_Integration/saved_packets.log saved_packets.log`. If you need to find the location on savi, you can use `realpath <file>` and just copy that.
+5. Run `diff <(cat received_packets.txt | sed 's/   .*//g' |  awk '{$1="";  print $0}' | sed 's/ //g') saved_packets.log`. If no differences, you're guchi. This command just changes the formatting from the Wireshark file so it's the same as the output from the Python script.
+
+Note, if we have out of order packets, this technique won't work anymore. We could run a sort beforehand though and then do the diff so we'll know all that data was still sent and received.
+For example, you could run `diff <(cat received_packets.txt | sed 's/   .*//g' |  awk '{$1="";  print $0}' | sed 's/ //g' | sort) <(sort saved_packets.log)`. However, our script seems to be too slow to go out of order.
+
+If you need to debug, running, `cat received_packets.txt | sed 's/   .*//g' |  awk '{$1="";  print $0}' | sed 's/ //g'` will be useful to get the same output format as saved_packets.log.
+
+If you're trying to verify multiple separate bursts of sending in data, you'd have to save each one to a different file. Then in Wireshark, you need to select the packets to export that correspond to what you sent in and export a separate file for each.
+
 ### Debug log of issue with multiple packets
 Issue was the read script increased iteration even if no packet was read. This meant we would always skip header if starting later.
 
 ## Issues
-
+- Can't reset filters to nothing without reprogramming ffshark.
 - Doesn't look like we ever clean up the interface in ffshark_send/read_packets.py. Should call axilite.clean() at some point. How will interrupts work? Is it safe.
 - Still not certain we don't ocassionally hang the board. Is something not thread safe??
 - Right now we're writing the PCAP file to an actual file first, then reading it and printing to terminal. This seems unecessary and we should see if we can print directly.
