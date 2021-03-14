@@ -1,0 +1,3 @@
+*.o
+ffshark_send_packets
+ffshark_read_packets

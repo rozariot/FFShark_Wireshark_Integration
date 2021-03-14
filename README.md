@@ -44,6 +44,8 @@ More info on running sshdump in general can be found [here](https://docs.google.
 
 ## Running FFShark with Wireshark Guide
 
+This method gets about 81kbps (kilobits per second) with locking but no contention.
+
 1. Ensure no one else using mpsoc
 2. On MPSoC,
 ```
@@ -55,6 +57,25 @@ exit
 3. On MPSoC, send in packets `python3 ffshark_send_packets.py --packets-directory sample_packets/multiple_8  --num-packets 100`
 4. On sshdump interface in Wireshark, set capture command to `python3 /home/savi/alex/FFShark_Wireshark_Integration/ffshark_read_packets.py`. Can also add a filter like `python3 /home/savi/alex/FFShark_Wireshark_Integration/ffshark_read_packets.py --capture-filter=udp` or set to "tcp".
 5. Once done using MPSoC, send message in Slack to say done using.
+
+## Running FFShark with C driver
+
+This method gets about 35Mbps (megabits per second) without any locking.
+
+1. Ensure no one else using mpsoc
+2. On MPSoC,
+```
+sudo su
+set_clocks 100
+program ffshark_fifo.bin
+exit
+```
+3. `cd ffshark_c_lang_drivers`
+4. Run `make ffshark_read_packets` to compile.
+5. On MPSoC, send in packets `python3 ../ffshark_send_packets.py --packets-directory ../sample_packets/multiple_8  --num-packets 5`
+6. On sshdump interface in Wireshark, set capture command to `/home/savi/alex/FFShark_Wireshark_Integration/ffshark_c_lang_drivers/ffshark_read_packets`
+7. Once done using MPSoC, send message in Slack to say done using.
+
 
 ## Verifying Correct Packets
 
