@@ -72,9 +72,16 @@ exit
 ```
 3. `cd ffshark_c_lang_drivers`
 4. Run `make ffshark_read_packets` to compile.
-5. On MPSoC, send in packets `python3 ../ffshark_send_packets.py --packets-directory ../sample_packets/multiple_8  --num-packets 5`
+5. On MPSoC, send in packets `python3 ../ffshark_send_packets.py --packets-directory ../sample_packets/multiple_8  --num-packets 5`. **Warning** This is NOT thread safe. Make sure to only run step 6 after step 5 has completely finished.
 6. On sshdump interface in Wireshark, set capture command to `/home/savi/alex/FFShark_Wireshark_Integration/ffshark_c_lang_drivers/ffshark_read_packets`
 7. Once done using MPSoC, send message in Slack to say done using.
+
+### Todos:
+- Add locking to C driver
+- Don't stop after 100 iterations
+- Put some of the constants elsewhere probably? Maybe load in from file to make easy to use.
+- Formal verification (easier to do once capstone machine is back up again).
+
 
 
 ## Verifying Correct Packets
