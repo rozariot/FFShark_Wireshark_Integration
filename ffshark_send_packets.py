@@ -98,7 +98,7 @@ def main():
         size_bytes = os.path.getsize(file)
 
         if (perf_test):
-            total_bytes += size_bytes
+            total_bytes += (size_bytes/2)
 
         # divide by 8 because each hex char is UTF-8 so 1 byte but it represents only 4 bits so it's 2x the data
         num_words = int(math.ceil(size_bytes/8))
@@ -176,8 +176,8 @@ def main():
 
     if (perf_test):
         total_time = time.time() - start_time
-        bit_rate = ((total_bytes/2) * 8) / total_time
-        write_bit_rate = ((total_bytes/2) * 8) / total_write_time
+        bit_rate = (total_bytes * 8) / total_time
+        write_bit_rate = (total_bytes * 8) / total_write_time
         print("Total time : " + str(total_time))
         print("Write time : " + str(total_write_time))
         print("Write with no Locking time: " + str(write_word_no_lock_time))
