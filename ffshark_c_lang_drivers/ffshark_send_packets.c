@@ -27,7 +27,10 @@ char directory_pattern[] = "/home/savi/tobias/ffshark_tut/sample_packets/multipl
 
 int main(int argc, char **argv) {
     
+    //initialize locking mechanism
+    lock_init();
     
+    int lock_fd = lock();    
     //initialize axi lite mem maps for FFShark and FIFO
     AXILITE axil_ffshark;
     AXILITE axil_fifo;
@@ -37,6 +40,7 @@ int main(int argc, char **argv) {
     //init FFShark and FIFO
     write_axilite(&axil_ffshark, FFSHARK_ENABLE_OFFSET, 0x1);
     write_axilite(&axil_fifo, FIFO_SRR_OFFSET, FIFO_SRR_RST_VAL);
+    unlock(lock_fd);
     
     //get all the packet text files in the given directory
     glob_t file_names;
@@ -80,9 +84,13 @@ int main(int argc, char **argv) {
         total_bytes += st.st_size / 2;        
         
         //check if FIFO has enough space for packet
+        lock_fd = lock();
         num_vacant_words = read_axilite(&axil_fifo, FIFO_TDFV_OFFSET);
+        unlock(lock_fd);
         while (num_words - 8 > num_vacant_words){
+            lock_fd = lock();
             num_vacant_words = read_axilite(&axil_fifo, FIFO_TDFV_OFFSET);
+            unlock(lock_fd);
             printf("num vacant words: %u\n", num_vacant_words);
         }
         
@@ -94,6 +102,7 @@ int main(int argc, char **argv) {
         }
         
         clock_t write_start = clock();
+        lock_fd = lock();
         while (fread(&word_buffer[2], 8, 1, fp) > 0){
             //profile the amount of time to read out packet file
             clock_t file_start_time = clock();
@@ -110,6 +119,7 @@ int main(int argc, char **argv) {
         //Write the number of bytes to TLR
         //divide by 2 because each hex char is UTF-8 so 1 byte but it represents only 4 bits so it's 2x the data
         write_axilite(&axil_fifo, FIFO_TLR_OFFSET, (unsigned)(st.st_size / 2));
+        unlock(lock_fd);        
         total_write_time += (double)(clock() - write_start)/(CLOCKS_PER_SEC/1000000);
         
         iteration_count+=1;
