@@ -21,6 +21,20 @@ void lock_init();
 int lock();
 void unlock(int fd);
 
+// AXI APIs. Works specifically with 64 bit datawidth
+typedef struct {
+    unsigned size;
+    int fd;
+    void *map_base;
+    long page_size;
+} AXI; 
+
+void init_axi(AXI *axi_handler, unsigned addr, unsigned size);
+
+uint64_t read_axi(AXI *axi_handler, unsigned offset);
+
+void write_axi(AXI *axi_handler, unsigned offset, uint64_t data);
+
 // Axilite APIs. Works specifically with 32 bit datawidth
 typedef struct {
     unsigned size;
@@ -35,7 +49,6 @@ unsigned read_axilite(AXILITE *axilite_handler, unsigned offset);
 
 void write_axilite(AXILITE *axilite_handler, unsigned offset, unsigned data);
 
- 
 
 
 #endif
