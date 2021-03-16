@@ -14,7 +14,7 @@
 
 `send_file.sh` thread unsafe version of send_file.sh. Takes an input packet text file and sends it to ffshark.
 
-`ffshark_send_packets.py` used to send packets to ffshark. user must provide a directory of packet text files as argument. the script will then randomly select packets from this directory to send to ffshark. this script uses `send_file_safe.sh` to send the packets. use the `--help` option to see more about it.
+`ffshark_send_packets.py` used to send packets to ffshark. User must provide a directory of packet text files as argument. The script will then randomly select packets from this directory to send to ffshark. Use the `--help` option to see more about it.
 
 `receive_file.sh` used to read a packet from the receive FIFO in FFShark. This is the thread unsafe version.
 
