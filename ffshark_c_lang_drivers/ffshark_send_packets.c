@@ -23,7 +23,10 @@
 
 #define num_packets 100 //will need to set this as a user parameter later
 
-char directory_pattern[] = "/home/savi/tobias/ffshark_tut/sample_packets/multiple_8/*.txt"; //will need to set this user parameter later
+//will need to set the directory as a user parameter later
+//char directory_pattern[] = "/home/savi/tobias/ffshark_tut/sample_packets/onelargetcppacket/*.txt";
+//char directory_pattern[] = "/home/savi/tobias/ffshark_tut/sample_packets/onesmalltcppacket/*.txt";
+char directory_pattern[] = "/home/savi/tobias/ffshark_tut/sample_packets/multiple_8/*.txt";
 
 int main(int argc, char **argv) {
     
