@@ -93,8 +93,10 @@ int main(int argc, char **argv) {
 
     //initialize axi lite mem maps for FFShark and FIFO
     AXILITE axil_fifo;
-    //TODO: TAKE LOCK
+    lock_init();
+    int lock_fd = lock();
     init_axilite(&axil_fifo, FIFO_BASE, FIFO_SIZE);
+    unlock(lock_fd);
 
     //init FIFO
     // write_axilite(&axil_fifo, FIFO_SRR_OFFSET, FIFO_SRR_RST_VAL);
@@ -110,13 +112,13 @@ int main(int argc, char **argv) {
 
     while(iteration_count < num_packets){
 
-        //TODO: TAKE LOCK
+        lock_fd = lock();
         // check if Receive FIFO has packets to read, if not don't read
         unsigned num_words_in_fifo = read_axilite(&axil_fifo, FIFO_RDFO_OFFSET);
-        //TODO: RELEASE LOCK
+        unlock(lock_fd);
 
         if (num_words_in_fifo > 0){
-            //TODO: TAKE LOCK
+            lock_fd = lock();
             unsigned num_bytes_in_packet = read_axilite(&axil_fifo, FIFO_RLR_OFFSET);
             unsigned num_words_in_packet = (unsigned) ceil((float) num_bytes_in_packet / 4.0);
             fill_in_pcaprec_hdr(&pcaprec_hdr, num_bytes_in_packet);
@@ -129,7 +131,7 @@ int main(int argc, char **argv) {
             }
             fflush(stdout);
             // printf("\n");
-            //TODO: RELEASE LOCK
+            unlock(lock_fd);
         }
         // printf("iteration %d\n", iteration_count);
 
