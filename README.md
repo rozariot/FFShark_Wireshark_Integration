@@ -1,8 +1,12 @@
 # FFShark_Wireshark_Integration
 
-`test_packets.py` is used to generate "random" packets. Running it with the `--help` option will provide details on all arguments that can be provided.
+`ffshark_read_packets.py`is used to output packets into PCAP format so that packets can be displayed on Wireshark. It can also take in filtering instructions for Wireshark as user arguments. Use the `--help` option to see more about it.
 
-`read_packets.py` is used to read the generated packets into human readable. It can also output packets into PCAP format. Again, use the `--help` option to see more about it.
+`ffshark_send_packets.py` used to send test packets to ffshark. User must provide a directory of packet text files as argument. The script will then randomly select packets from this directory to send to ffshark. Use the `--help` option to see more about it.
+
+`test_packets.py` is used to generate "random" packets. These packets can be stored in a directory, then sent to FFShark with `ffshark_send_packets.py` for testing. Running it with the `--help` option will provide details on all arguments that can be provided.
+
+`read_packets.py` is used to read the generated packets into human readable. It can also output packets into PCAP format. Again, use the `--help` option to see more about it. 
 
 `pcap_formatter.py` is used to read a packet stored as a binary file (.bin) and formats it into pcap format. Use `-h` to see what to place as arguments.
 
@@ -14,8 +18,6 @@
 
 `send_file.sh` thread unsafe version of send_file.sh. Takes an input packet text file and sends it to ffshark.
 
-`ffshark_send_packets.py` used to send packets to ffshark. User must provide a directory of packet text files as argument. The script will then randomly select packets from this directory to send to ffshark. Use the `--help` option to see more about it.
-
 `receive_file.sh` used to read a packet from the receive FIFO in FFShark. This is the thread unsafe version.
 
 `reg_names.sh` a script that loads the registers offsets for FFShark into a bash shell.
@@ -26,7 +28,7 @@
 
 `compilefilt.c` uses pcap library to compile filtering instructions into raw bpf filter. This was taken from https://github.com/UofT-HPRC/fpga-bpf/tree/main/utilities/compilefilt. This script currently outputs generated bpf instructions into the terminal. These outputs may need to be disabled to avoid interference of pcap packet transaction through sshdump. Run `gcc -o compilefilt compilefilt.c -lpcap` to regenerate `compilefilt` after any changes.
 
-`compile_and_send_filter.py` takes a filtering instruction, compiles it and sends the bpf compiled instructions to FFShark to be configured. Uses `compilefilt` and `sendfilt` to compile and send the filter respectively. This will most likely be called by `ffshark_read_packets.py`, which will need to use `compile_filter.py`'s strategy for taking in user input for filtering instructions
+`compile_and_send_filter.py` takes a filtering instruction, compiles it and sends the bpf compiled instructions to FFShark to be configured. Uses `compilefilt` and `sendfilt` to compile and send the filter respectively. This is called by `ffshark_read_packets.py` to allow users to set the packet filter on Wireshark.
 
 ## Displaying generated packets on Wireshark
 
