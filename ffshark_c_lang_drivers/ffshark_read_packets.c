@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <time.h>
 #include <inttypes.h>
 #include <math.h>
 #include <stdint.h>
@@ -28,6 +29,9 @@
 
 #define num_packets 100 //will need to set this as a user parameter later
 
+//flag to print out profiling data
+//set to 0 if you want to view packets on wireshark
+#define PROFILE 0 
 
 typedef struct pcap_hdr_s {
     uint32_t magic_number;   /* magic number */
@@ -109,6 +113,13 @@ int main(int argc, char **argv) {
     fwrite(&pcap_hdr, sizeof(pcap_hdr), 1, stdout);
 
     pcaprec_hdr_t pcaprec_hdr;
+    
+    //for profiling    
+    double total_bytes = 0;
+    double fifo_read_time_no_lock = 0;
+    double print_to_terminal_time = 0;
+    double pcap_format_time = 0;
+    clock_t start_time = clock();
 
     while(iteration_count < num_packets){
 
@@ -117,21 +128,35 @@ int main(int argc, char **argv) {
         unsigned num_words_in_fifo = read_axilite(&axil_fifo, FIFO_RDFO_OFFSET);
         unlock(lock_fd);
 
-        if (num_words_in_fifo > 0){
+        if (num_words_in_fifo > 0){            
             lock_fd = lock();
             unsigned num_bytes_in_packet = read_axilite(&axil_fifo, FIFO_RLR_OFFSET);
             unsigned num_words_in_packet = (unsigned) ceil((float) num_bytes_in_packet / 4.0);
+            
+            clock_t pcap_header_start = clock();
             fill_in_pcaprec_hdr(&pcaprec_hdr, num_bytes_in_packet);
             fwrite(&pcaprec_hdr, sizeof(pcaprec_hdr), 1, stdout);
+            pcap_format_time += (double) (clock() - pcap_header_start)/(CLOCKS_PER_SEC/1000000);
 
             for (int i = 0; i < num_words_in_packet; i++){
+                clock_t read_start_time = clock();
                 unsigned data_word = read_axilite(&axil_fifo, FIFO_RDFD_OFFSET);
+                fifo_read_time_no_lock += (double) (clock() - read_start_time)/(CLOCKS_PER_SEC/1000000);
+                
+                clock_t format_start = clock();
                 endian_swap_fwrite(&data_word, sizeof(unsigned), 1, stdout);
+                pcap_format_time += (double) (clock() - format_start)/(CLOCKS_PER_SEC/1000000);
                 // printf("%x ", data_word);
             }
-            fflush(stdout);
-            // printf("\n");
             unlock(lock_fd);
+            
+            clock_t terminal_print_start = clock();
+            fflush(stdout);
+            print_to_terminal_time += (double) (clock() - terminal_print_start)/(CLOCKS_PER_SEC/1000000);
+            // printf("\n");
+            
+            
+            total_bytes += num_bytes_in_packet;
         }
         // printf("iteration %d\n", iteration_count);
 
@@ -139,7 +164,18 @@ int main(int argc, char **argv) {
         iteration_count+=1;
 
     }
-
+    
+    //print out profiling data
+    if (PROFILE){
+        clock_t end_time = clock();    
+        double total_time = (double) (end_time - start_time)/(CLOCKS_PER_SEC/1000000);
+        double bit_rate = ((total_bytes * 8)/total_time) * 1000000;
+        printf("\nTotal time : %f seconds\n", total_time / 1000000 );
+        printf("Fifo read time without locking : %f seconds\n ", fifo_read_time_no_lock / 1000000);
+        printf("Printing to terminal time : %f seconds\n ", print_to_terminal_time / 1000000);
+        printf("PCAP formatting time: %f seconds\n", pcap_format_time / 1000000);
+        printf("Data rate : %f bits/second \n", bit_rate);
+    }
 
 
 }
