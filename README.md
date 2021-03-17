@@ -4,7 +4,7 @@ FFShark is a hardware network debugging tool developed by J.C. Vega and M.A. Mer
 
 `ffshark_read_packets.py` Reads packets from FFShark. It then outputs packets into PCAP format so that packets can be displayed on Wireshark. It can also take in filtering instructions for Wireshark as user arguments. Use the `--help` option to see more about it.
 
-`ffshark_send_packets.py` used to send test packets to ffshark. User must provide a directory of packet text files as argument. The script will then randomly select packets from this directory to send to ffshark. Use the `--help` option to see more about it.
+`ffshark_send_packets.py` Sends test packets to ffshark. User must provide a directory of packet text files as argument. The script will then randomly select packets from this directory to send to ffshark. Use the `--help` option to see more about it.
 
 `ffshark_c_lang_drivers` Set of C drivers to allow interfacing Wireshark with FFShark. These drivers are an alternative to the python drivers of `ffshark_read_packets.py` and `ffshark_send_packets.py`. These drivers were created to see how much performance could be improved by using C, a lower level language. Find out more in the README in the ffshark_c_lang_drivers directory.
 
