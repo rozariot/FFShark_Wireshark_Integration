@@ -6,7 +6,7 @@
 
 `test_packets.py` is used to generate "random" packets. These packets can be stored in a directory, then sent to FFShark with `ffshark_send_packets.py` for testing. Running it with the `--help` option will provide details on all arguments that can be provided.
 
-`read_packets.py` is used to read the generated packets into human readable. It can also output packets into PCAP format. Again, use the `--help` option to see more about it. 
+`read_packets.py` is used to read the generated packets into human readable. It can also output packets into PCAP format. Again, use the `--help` option to see more about it.
 
 `pcap_formatter.py` is used to read a packet stored as a binary file (.bin) and formats it into pcap format. Use `-h` to see what to place as arguments.
 
@@ -74,12 +74,11 @@ exit
 ```
 3. `cd ffshark_c_lang_drivers`
 4. Run `make ffshark_read_packets` to compile.
-5. On MPSoC, send in packets `python3 ../ffshark_send_packets.py --packets-directory ../sample_packets/multiple_8  --num-packets 5`. **Warning** This is NOT thread safe. Make sure to only run step 6 after step 5 has completely finished.
+5. On MPSoC, send in packets `python3 ../ffshark_send_packets.py --packets-directory ../sample_packets/multiple_8  --num-packets 5`.
 6. On sshdump interface in Wireshark, set capture command to `/home/savi/alex/FFShark_Wireshark_Integration/ffshark_c_lang_drivers/ffshark_read_packets`
 7. Once done using MPSoC, send message in Slack to say done using.
 
 ### Todos:
-- Add locking to C driver
 - Don't stop after 100 iterations
 - Put some of the constants elsewhere probably? Maybe load in from file to make easy to use.
 - Formal verification (easier to do once capstone machine is back up again).

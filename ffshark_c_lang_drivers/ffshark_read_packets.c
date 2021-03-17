@@ -1,55 +1,15 @@
+#include "ffshark_read_packets.h"
 #include "libmpsoc.h"
-#include <glob.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>
+#include <errno.h>
 #include <sys/time.h>
-#include <time.h>
-#include <inttypes.h>
 #include <math.h>
-#include <stdint.h>
+#include <getopt.h>
 
-// Register constants
-// The base addr can vary depending on FFShark and PS config, we really shouldn't hard code
-#define FFSHARK_BASE 0xA0010000
-#define FFSHARK_SIZE 0x1000 // 4KB mem map region
-#define FFSHARK_ENABLE_OFFSET 0x4
-#define FIFO_BASE 0xA0011000
-#define FIFO_SIZE 0x1000 // 4KB mem map region
-#define FIFO_TDFV_OFFSET 0xC
-#define FIFO_TDFD_OFFSET 0x10
-#define FIFO_RDFO_OFFSET 0x1C
-#define FIFO_TLR_OFFSET 0x14
-#define FIFO_RDFD_OFFSET 0x20
-#define FIFO_RLR_OFFSET 0x24
-#define FIFO_SRR_OFFSET 0x28
-#define FIFO_SRR_RST_VAL 0xA5
-#define FIFO_DATA_WIDTH 4 //in bytes
-
-#define num_packets 100 //will need to set this as a user parameter later
-
-//flag to print out profiling data
-//set to 0 if you want to view packets on wireshark
-#define PROFILE 0 
-
-typedef struct pcap_hdr_s {
-    uint32_t magic_number;   /* magic number */
-    uint16_t version_major;  /* major version number */
-    uint16_t version_minor;  /* minor version number */
-    int32_t  thiszone;       /* GMT to local correction */
-    uint32_t sigfigs;        /* accuracy of timestamps */
-    uint32_t snaplen;        /* max length of captured packets, in octets */
-    uint32_t network;        /* data link type */
-} pcap_hdr_t;
-
-
-typedef struct pcaprec_hdr_s {
-    uint32_t ts_sec;         /* timestamp seconds */
-    uint32_t ts_usec;        /* timestamp microseconds */
-    uint32_t incl_len;       /* number of octets of packet saved in file */
-    uint32_t orig_len;       /* actual length of packet */
-} pcaprec_hdr_t;
+#ifdef PROFILE
+#include <time.h>
+#endif
 
 
 //From https://stackoverflow.com/questions/40193322/how-to-fwrite-and-fread-endianness-independant-integers-such-that-i-can-fwrite
@@ -89,11 +49,70 @@ void fill_in_pcaprec_hdr(pcaprec_hdr_t *pcaprec_hdr, unsigned num_bytes){
     pcaprec_hdr->ts_usec = current_time.tv_usec;
     pcaprec_hdr->incl_len = num_bytes;
     pcaprec_hdr->orig_len = num_bytes;
+    return;
+}
+
+void print_help(){
+    printf("usage: ffshark_read_packets [-n NUM] [-f FILTER] [-h]\n\n"
+        "Read FFShark filtered packets and prints them to terminal in PCAP format.\n\n"
+        "Optional Arguments:\n"
+        "  -h, --help\n"
+        "          Show this help message and exit\n"
+        "  -n, --num-iterations=NUM\n"
+        "          The maximum number of packets to read before exiting.\n"
+        "          A value of -1 is equivalent to infinity.\n"
+        "  -f, --filter=FILTER\n"
+        "          The BPF filter to be used in FFShark.\n");
+    return;
 
 }
 
 int main(int argc, char **argv) {
 
+    //Get user arguments
+    int opt;
+    int num_packets = -1;
+    char *filter = NULL;
+    char *endptr;
+    int option_index;
+    struct option long_options[] = {
+        {"help", no_argument, NULL, 'h'},
+        {"filter", required_argument, NULL, 'f'},
+        {"num-iterations", required_argument, NULL, 'n'},
+        {0, 0, 0, 0}
+    };
+
+    while ((opt = getopt_long(argc, argv, "n:f:h", long_options, &option_index)) != -1){
+        switch(opt){
+            case 'n':
+                num_packets = strtol(optarg, &endptr, 10);
+                if (endptr == optarg || *endptr != '\0'){
+                    printf("ERROR: -n or --num-iterations argument was not a valid integer.\nExiting.\n");
+                    return 1;
+                } else if (errno == ERANGE){
+                    printf("ERROR: -n or --num-iterations argument was too large and overflowed.\n"
+                        "Try reducing NUM or setting to -1 for infinity.\nExiting\n");
+                    return 1;
+                }
+                break;
+            case 'f':
+                filter = optarg;
+                break;
+            case 'h':
+                print_help();
+                return 0;
+            default:
+                print_help();
+                return 1;
+        }
+    }
+
+    //Error checking
+    if (num_packets == 0 || num_packets < -1){
+        printf("ERROR: -n or --num-iterations argument must be greater than 0 or equal to -1 (for infinity).\n"
+            "Input was: %d\nExiting\n", num_packets);
+        return 1;
+    }
 
     //initialize axi lite mem maps for FFShark and FIFO
     AXILITE axil_fifo;
@@ -102,10 +121,6 @@ int main(int argc, char **argv) {
     init_axilite(&axil_fifo, FIFO_BASE, FIFO_SIZE);
     unlock(lock_fd);
 
-    //init FIFO
-    // write_axilite(&axil_fifo, FIFO_SRR_OFFSET, FIFO_SRR_RST_VAL);
-    //TODO: RELEASE LOCK
-
     int iteration_count = 0;
 
     pcap_hdr_t pcap_hdr;
@@ -113,69 +128,81 @@ int main(int argc, char **argv) {
     fwrite(&pcap_hdr, sizeof(pcap_hdr), 1, stdout);
 
     pcaprec_hdr_t pcaprec_hdr;
-    
-    //for profiling    
+
+#ifdef PROFILE
+    //for profiling
     double total_bytes = 0;
     double fifo_read_time_no_lock = 0;
     double print_to_terminal_time = 0;
     double pcap_format_time = 0;
     clock_t start_time = clock();
+#endif
 
-    while(iteration_count < num_packets){
+    while(num_packets == -1 || iteration_count < num_packets){
 
         lock_fd = lock();
         // check if Receive FIFO has packets to read, if not don't read
         unsigned num_words_in_fifo = read_axilite(&axil_fifo, FIFO_RDFO_OFFSET);
         unlock(lock_fd);
 
-        if (num_words_in_fifo > 0){            
+        if (num_words_in_fifo > 0){
             lock_fd = lock();
             unsigned num_bytes_in_packet = read_axilite(&axil_fifo, FIFO_RLR_OFFSET);
             unsigned num_words_in_packet = (unsigned) ceil((float) num_bytes_in_packet / 4.0);
-            
+#ifdef PROFILE
             clock_t pcap_header_start = clock();
+#endif
             fill_in_pcaprec_hdr(&pcaprec_hdr, num_bytes_in_packet);
             fwrite(&pcaprec_hdr, sizeof(pcaprec_hdr), 1, stdout);
+#ifdef PROFILE
             pcap_format_time += (double) (clock() - pcap_header_start)/(CLOCKS_PER_SEC/1000000);
-
+#endif
             for (int i = 0; i < num_words_in_packet; i++){
+#ifdef PROFILE
                 clock_t read_start_time = clock();
+#endif
                 unsigned data_word = read_axilite(&axil_fifo, FIFO_RDFD_OFFSET);
+#ifdef PROFILE
                 fifo_read_time_no_lock += (double) (clock() - read_start_time)/(CLOCKS_PER_SEC/1000000);
-                
+
                 clock_t format_start = clock();
+#endif
                 endian_swap_fwrite(&data_word, sizeof(unsigned), 1, stdout);
+#ifdef PROFILE
                 pcap_format_time += (double) (clock() - format_start)/(CLOCKS_PER_SEC/1000000);
+#endif
                 // printf("%x ", data_word);
             }
             unlock(lock_fd);
-            
+#ifdef PROFILE
             clock_t terminal_print_start = clock();
+#endif
             fflush(stdout);
+#ifdef PROFILE
             print_to_terminal_time += (double) (clock() - terminal_print_start)/(CLOCKS_PER_SEC/1000000);
+
             // printf("\n");
-            
-            
+
+
             total_bytes += num_bytes_in_packet;
+#endif
+            iteration_count+=1;
+            // printf("iteration %d\n", iteration_count);
         }
-        // printf("iteration %d\n", iteration_count);
-
-
-        iteration_count+=1;
-
     }
-    
+
     //print out profiling data
-    if (PROFILE){
-        clock_t end_time = clock();    
-        double total_time = (double) (end_time - start_time)/(CLOCKS_PER_SEC/1000000);
-        double bit_rate = ((total_bytes * 8)/total_time) * 1000000;
-        printf("\nTotal time : %f seconds\n", total_time / 1000000 );
-        printf("Fifo read time without locking : %f seconds\n ", fifo_read_time_no_lock / 1000000);
-        printf("Printing to terminal time : %f seconds\n ", print_to_terminal_time / 1000000);
-        printf("PCAP formatting time: %f seconds\n", pcap_format_time / 1000000);
-        printf("Data rate : %f bits/second \n", bit_rate);
-    }
+#ifdef PROFILE
+    clock_t end_time = clock();
+    double total_time = (double) (end_time - start_time)/(CLOCKS_PER_SEC/1000000);
+    double bit_rate = ((total_bytes * 8)/total_time) * 1000000;
+    printf("\nTotal time : %f seconds\n", total_time / 1000000 );
+    printf("Fifo read time without locking : %f seconds\n ", fifo_read_time_no_lock / 1000000);
+    printf("Printing to terminal time : %f seconds\n ", print_to_terminal_time / 1000000);
+    printf("PCAP formatting time: %f seconds\n", pcap_format_time / 1000000);
+    printf("Data rate : %f bits/second \n", bit_rate);
+#endif
 
+    return 0;
 
 }
