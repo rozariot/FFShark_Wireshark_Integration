@@ -1,6 +1,6 @@
 # FFShark_Wireshark_Integration
 
-`Project Description : ` FFShark is a hardware network debugging tool developed by J.C. Vega and M.A. Merlini at the University of Toronto through P. Chow’s research group. It can be used in high speed data centers capable of 100G speeds, that is, running at 100 Gbit/s. Our project connects FFShark to the industry standard Wireshark network debugging/analyzer tool.
+FFShark is a hardware network debugging tool developed by J.C. Vega and M.A. Merlini at the University of Toronto through P. Chow’s research group. It can be used in high speed data centers capable of 100G speeds, that is, running at 100 Gbit/s. Our project connects FFShark to the industry standard Wireshark network debugging/analyzer tool.
 
 `ffshark_read_packets.py` Reads packets from FFShark. It then outputs packets into PCAP format so that packets can be displayed on Wireshark. It can also take in filtering instructions for Wireshark as user arguments. Use the `--help` option to see more about it.
 
