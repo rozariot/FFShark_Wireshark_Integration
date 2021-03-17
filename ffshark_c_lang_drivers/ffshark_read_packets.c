@@ -30,7 +30,8 @@
 #define num_packets 100 //will need to set this as a user parameter later
 
 //flag to print out profiling data
-//set to 0 if you want to view packets on wireshark
+//set to 0 if you want Wireshark to be able to display packets
+//set to 1 if you want to see performance measurements
 #define PROFILE 0 
 
 typedef struct pcap_hdr_s {
