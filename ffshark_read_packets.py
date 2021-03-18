@@ -41,7 +41,7 @@ def init_lock_file():
 
 def main():
     parser = argparse.ArgumentParser(description="Read FFShark Filtered packets and bring them onto Wireshark")
-    parser.add_argument("--capture-filter", help="The capture filter")
+    parser.add_argument("--capture-filter", help="The capture filter. Set it to 'all' to reset the filter to accept all packets")
     parser.add_argument("--num-iterations", action="store", type=float, default=float("inf"), help="Specify how many iterations the read should loop for.")
     parser.add_argument("--debug", action="store_true", help="Increase output verbosity")
     parser.add_argument("--perf-test", action="store_true", help="measure performance")

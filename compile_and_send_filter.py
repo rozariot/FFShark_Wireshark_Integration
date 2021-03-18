@@ -32,9 +32,16 @@ def compile_and_send_filter(instruction):
     lock = open(LOCK_FILE, "r")
 
     COMPILE_FILT_CMD = curr_dir + '/compilefilt' + " " + SUPPRESS_OUTPUT
-    SEND_FILT_CMD = "sudo ./sendfilter " + bpf_prog + " " + str(FILT_INSTR_ADDR) + " " + SUPPRESS_OUTPUT	
+    
+    if (instruction == "all"):
+        prog = "/home/savi/filterexecutables/acceptall.bpf"
+    else: 
+        prog = bpf_prog
+        os.system(COMPILE_FILT_CMD + " " + instruction)
+    
+    SEND_FILT_CMD = "sudo ./sendfilter " + prog + " " + str(FILT_INSTR_ADDR) + " " + SUPPRESS_OUTPUT	
 
-    os.system(COMPILE_FILT_CMD + " " + instruction)
+    
 
     fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
     os.system(SEND_FILT_CMD)
