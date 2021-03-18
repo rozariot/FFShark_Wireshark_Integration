@@ -34,6 +34,8 @@ FFShark is a hardware network debugging tool developed by J.C. Vega and M.A. Mer
 
 `compile_and_send_filter.py` takes a filtering instruction, compiles it and sends the bpf compiled instructions to FFShark to be configured. Uses `compilefilt` and `sendfilt` to compile and send the filter respectively. This is called by `ffshark_read_packets.py` to allow users to set the packet filter on Wireshark.
 
+`acceptall.bpf` used to reset FFshark filter to accept all packets.
+
 ## Displaying generated packets on Wireshark
 
 1. I copied the `read_packet.py` script and a random packet in the `sample_packet` directory over to savi@10.10.14.217.
