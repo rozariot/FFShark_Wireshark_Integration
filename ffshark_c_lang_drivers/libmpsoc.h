@@ -13,8 +13,8 @@
 // ****************************************
 // Compiling and sending filters commands
 // ****************************************
-#define COMPILE_FILT_CMD "../compilefilt "
-#define SEND_FILT_CMD "sudo ../sendfilter "
+#define COMPILE_FILT_CMD "/home/savi/filterexecutables/compilefilt "
+#define SEND_FILT_CMD "sudo /home/savi/filterexecutables/sendfilter "
 #define SUPPRESS_OUTPUT " > /dev/null "
 
 

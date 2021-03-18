@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <sys/mman.h> //mmap
 #include <sys/file.h> //flock
-
+#include <linux/limits.h>
 
 
 //Locking Mechanism APIs
@@ -30,7 +30,7 @@ void lock_init(){
     FILE *file = fopen((char *)LOCK_FILE, "r");
 
     if (!file){
-        system(MAKE_LOCK_FILE_CMD);
+        fopen(LOCK_FILE, "w");
     }
     else {
         fclose(file);
@@ -69,7 +69,7 @@ void compile_filter(char * filt_instr){
     */ 
 
     char instr[1024];
-    strcpy(instr, COMPILE_FILT_CMD);
+    strcpy(instr, COMPILE_FILT_CMD);    
     strcat(instr, SUPPRESS_OUTPUT);
     strcat(instr, filt_instr);
     system(instr);
@@ -86,12 +86,22 @@ void send_filter(bool accept_all, unsigned filt_instr_addr){
     Memory Address where FFShark programs the filter.
     
     Uses the sendfilt executable found in the 2 links:
-    https://github.com/UofT-HPRC/fpga-bpf/tree/main/utilities/mpsoc_sendfilter  
+    https://github.com/UofT-HPRC/fpga-bpf/tree/main/utilities/mpsoc_sendfilter
+
+    Example usage under the description in compile_filter() 
     */
     
-    char prog_file[] = "prog.bpf ";
-    char acceptall_file[] = "acceptall.bpf ";
+    //setting up prog.bpf string
+    char cwd[PATH_MAX];
+    char prog_file[PATH_MAX];
+    getcwd(cwd, sizeof(cwd));    
+    strcpy(prog_file, cwd);
+    strcat(prog_file, "/prog.bpf ");
+
+    char acceptall_file[] = "/home/savi/filterexecutables/acceptall.bpf ";
     char instr[1024];
+    
+
     strcpy(instr, SEND_FILT_CMD);
     char addr[16];
     char hex_adr[16] = "0x";

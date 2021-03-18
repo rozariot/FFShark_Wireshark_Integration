@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
         while (fread(&word_buffer[2], 8, 1, fp) > 0){
             //profile the amount of time to read out packet file
             clock_t file_start_time = clock();
-            packet_data = strtoul(word_buffer, NULL, 0);
+            packet_data = strtoul((char *)word_buffer, NULL, 0);
             file_read_time += (double) (clock() - file_start_time)/(CLOCKS_PER_SEC/1000000);
             
             //profile register writing time

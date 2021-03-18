@@ -6,6 +6,8 @@
 #include <sys/time.h>
 #include <math.h>
 #include <getopt.h>
+#include <stdbool.h>
+#include <string.h>
 
 #ifdef PROFILE
 #include <time.h>
@@ -62,7 +64,7 @@ void print_help(){
         "          The maximum number of packets to read before exiting.\n"
         "          A value of -1 is equivalent to infinity.\n"
         "  -f, --filter=FILTER\n"
-        "          The BPF filter to be used in FFShark.\n");
+        "          The BPF filter to be used in FFShark. set it to 'all' to reset the filter to accept everything \n");
     return;
 
 }
@@ -120,6 +122,19 @@ int main(int argc, char **argv) {
     int lock_fd = lock();
     init_axilite(&axil_fifo, FIFO_BASE, FIFO_SIZE);
     unlock(lock_fd);
+    
+    //set up filtering  
+    if (filter != NULL){
+        lock_fd = lock();
+        if (strcmp(filter, "all") == 0){
+            send_filter(true, FILT_INSTR_ADDR);
+        }
+        else{
+            compile_filter(filter);
+            send_filter(false, FILT_INSTR_ADDR);
+        }
+        unlock(lock_fd);
+    }
 
     int iteration_count = 0;
 
@@ -187,7 +202,7 @@ int main(int argc, char **argv) {
             total_bytes += num_bytes_in_packet;
 #endif
             iteration_count+=1;
-            // printf("iteration %d\n", iteration_count);
+            //printf("iteration %d\n", iteration_count);
         }
     }
 
@@ -202,6 +217,8 @@ int main(int argc, char **argv) {
     printf("PCAP formatting time: %f seconds\n", pcap_format_time / 1000000);
     printf("Data rate : %f bits/second \n", bit_rate);
 #endif
+
+    //if (filter == NULL) printf("filter is null");
 
     return 0;
 

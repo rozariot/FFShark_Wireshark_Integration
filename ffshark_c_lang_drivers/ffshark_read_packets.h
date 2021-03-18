@@ -13,6 +13,7 @@
 #define FIFO_RDFO_OFFSET 0x1C
 #define FIFO_RDFD_OFFSET 0x20
 #define FIFO_RLR_OFFSET 0x24
+#define FILT_INSTR_ADDR 0xA0010000
 
 
 // ****************************************
