@@ -52,6 +52,64 @@ void unlock(int fd){
     close(fd);
 }
 
+// APIs for compiling and sending filtering 
+// instructions to FFShark. 
+void compile_filter(char * filt_instr){
+    /*
+    Compiles the filter from the filtering instruction.
+    It creates a file called prog.bpf.
+    
+    Uses the compilefilt executable found in link:
+    https://github.com/UofT-HPRC/fpga-bpf/tree/main/utilities/compilefilt
+    
+    example:
+    char filter[] = tcp;
+    compile_filter(tcp); //compile filter for tcp
+    send_filter(false, 0xA0010000); //send tcp filter by sending prog.bpf
+    */ 
+
+    char instr[1024];
+    strcpy(instr, COMPILE_FILT_CMD);
+    strcat(instr, SUPPRESS_OUTPUT);
+    strcat(instr, filt_instr);
+    system(instr);
+}
+
+void send_filter(bool accept_all, unsigned filt_instr_addr){
+    /*
+    accept_all : 
+    If it is true, acceptall.bpf file gets programmed as the filter.
+    Otherwise, prog.bpf gets sent as the filter, which needs to have been
+    compiled by compile_filter.
+    
+    filt_instr_addr:
+    Memory Address where FFShark programs the filter.
+    
+    Uses the sendfilt executable found in the 2 links:
+    https://github.com/UofT-HPRC/fpga-bpf/tree/main/utilities/mpsoc_sendfilter  
+    */
+    
+    char prog_file[] = "prog.bpf ";
+    char acceptall_file[] = "acceptall.bpf ";
+    char instr[1024];
+    strcpy(instr, SEND_FILT_CMD);
+    char addr[16];
+    char hex_adr[16] = "0x";
+    
+    sprintf(addr, "%x", filt_instr_addr);
+    strcat(hex_adr, addr);
+    
+    if (accept_all){
+        strcat(instr, acceptall_file);
+    }
+    else {
+        strcat(instr, prog_file);
+    }
+    strcat(instr, hex_adr);
+    strcat(instr, SUPPRESS_OUTPUT);
+    system(instr);
+}
+
 // Axi APIs
 void init_axi(AXI *axi_handler, unsigned addr, unsigned size){
     /*

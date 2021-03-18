@@ -2,13 +2,20 @@
 #define LIBMPSOC_H
 
 #include <stdint.h> //uintN_t
-
+#include <stdbool.h>
 
 // ****************************************
-// Lock file and commond to create lock file
+// Lock file and command to create lock file
 // ****************************************
 #define LOCK_FILE "/var/lock/pokelockfile"
 #define MAKE_LOCK_FILE_CMD "touch /var/lock/pokelockfile"
+
+// ****************************************
+// Compiling and sending filters commands
+// ****************************************
+#define COMPILE_FILT_CMD "../compilefilt "
+#define SEND_FILT_CMD "sudo ../sendfilter "
+#define SUPPRESS_OUTPUT " > /dev/null "
 
 
 // ****************************************
@@ -18,6 +25,12 @@
 void lock_init();
 int lock();
 void unlock(int fd);
+
+// ****************************************
+// APIs for compiling and sending filtering 
+// instructions to FFShark. 
+void compile_filter(char * filt_instr);
+void send_filter(bool accept_all, unsigned filt_instr_addr);
 
 // ****************************************
 // AXI APIs. Works specifically with 64 bit datawidth
