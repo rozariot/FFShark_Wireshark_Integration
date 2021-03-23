@@ -48,12 +48,14 @@ def main():
     parser.add_argument("--perf-test", action="store_true", help="measure performance")
     parser.add_argument("--save-sent-packets", action="store", help="If enabled, will also save the packets sent to FFShark to a file specified by this argument. " +
                         "It creates the file if needed, and overwrites it if already exists.")
+    parser.add_argument("--reset-fifo", action="store", type=int, default=0, help="If reset-fifo != 0 then the send fifo will reset. Otherwise It won't reset. By default, reset is disabled")
     args = parser.parse_args()
 
     directory = args.packets_directory
     wait_time = args.send_wait_time
     num_packets = args.num_packets
     perf_test = args.perf_test
+    reset_fifo = args.reset_fifo
 
     directory = args.packets_directory
     assert(os.path.exists(directory)), "directory doesn't exist"
@@ -72,7 +74,8 @@ def main():
 
     # initialize FFShark and FIFO
     print(axil_FFShark.write32(value=0x1,offset=FFSHARK_ENABLE_OFFSET))
-    print(axil_FIFO.write32(value=FIFO_SRR_RST_VAL,offset=FIFO_SRR_OFFSET))
+    if (reset_fifo != 0):
+        print(axil_FIFO.write32(value=FIFO_SRR_RST_VAL,offset=FIFO_SRR_OFFSET))
 
     fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
