@@ -6,6 +6,9 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <inttypes.h>
+#include <getopt.h>
+#include <errno.h>
+#include <math.h>
 
 // Register constants
 // The base addr can vary depending on FFShark and PS config, we really shouldn't hard code
@@ -21,14 +24,93 @@
 #define FIFO_SRR_RST_VAL 0xA5
 #define FIFO_DATA_WIDTH 4 //in bytes
 
-#define num_packets 100 //will need to set this as a user parameter later
+void print_help(){
+    printf("usage: ffshark_send_packets [-n NUM] [-d DIRECTORY] [-r NUM] [-h]\n\n"
+        "send pregenerated packets from text files to FFSHark.\n\n"
+        "Optional Arguments:\n"
+        "  -h, --help\n"
+        "          Show this help message and exit\n"
+        "  -n, --num-packets=NUM\n"
+        "          The number of packets to send.\n"
+        "          A value of -1 or less is equivalent to infinity. It is -1 by default\n"
+        "  -r, --reset-fifo=NUM\n"
+        "          Set it to any number besides 0 to reset the AXI send fifo. Set it to 0 to disable reset.\n" 
+        "          Reset is disabled by default\n"
+        "Mandatory Arguments:\n"
+        "  -d, --directory=DIRECTORY\n"
+        "          This is the directory of pregenerated test packets. These packets must be in .txt files \n"
+);
+    return;
 
-//will need to set the directory as a user parameter later
-//char directory_pattern[] = "/home/savi/tobias/ffshark_tut/sample_packets/onelargetcppacket/*.txt";
-//char directory_pattern[] = "/home/savi/tobias/ffshark_tut/sample_packets/onesmalltcppacket/*.txt";
-char directory_pattern[] = "/home/savi/tobias/ffshark_tut/sample_packets/multiple_8/*.txt";
+}
 
 int main(int argc, char **argv) {
+    //Get user arguments
+    int opt;
+    int num_packets = -1;
+    char *directory = NULL;
+    char directory_pattern[1024];
+    char *endptr;
+    int option_index;
+    int reset_fifo = 0;
+    struct option long_options[] = {
+        {"help", no_argument, NULL, 'h'},
+        {"directory", required_argument, NULL, 'd'},
+        {"num-packets", required_argument, NULL, 'n'},
+        {"reset-fifo", required_argument, NULL, 'r'},
+        {0, 0, 0, 0}
+    };
+
+    while ((opt = getopt_long(argc, argv, "n:f:h", long_options, &option_index)) != -1){
+        switch(opt){
+            case 'n':
+                num_packets = strtol(optarg, &endptr, 10);
+                if (endptr == optarg || *endptr != '\0'){
+                    printf("ERROR: -n or --num-packets argument was not a valid integer.\nExiting.\n");
+                    return 1;
+                } else if (errno == ERANGE){
+                    printf("ERROR: -n or --num-packets argument was too large and overflowed.\n"
+                        "Try reducing NUM or setting to -1 for infinity.\nExiting\n");
+                    return 1;
+                }
+                break;
+            case 'd':
+                directory = optarg;
+                break;
+            case 'r':
+                reset_fifo = strtol(optarg, &endptr, 10);
+                if (endptr == optarg || *endptr != '\0'){
+                    printf("ERROR: -r or --reset-fifo argument was not a valid integer.\nExiting.\n");
+                    return 1;
+                } else if (errno == ERANGE){
+                    printf("ERROR: -r or --reset-fifo argument was too large and overflowed.\n"
+                        "to disable fifo --reset-fifo needs to be 0. To turn it on, --reset-fifo can be any other number.\n" 
+                        "It does not have to be so large.\nExiting\n");
+                    return 1;
+                }
+                break;
+            case 'h':
+                print_help();
+                return 0;
+            default:
+                print_help();
+                return 1;
+        }
+    }
+  
+    
+    //get the directory pattern
+    if (directory == NULL){
+        printf ("You did not provide directory of packets");
+        return -1;
+    }
+    strcpy(directory_pattern, directory);
+    if (directory_pattern[strlen(directory_pattern)-1] == '/'){
+        strcat(directory_pattern, "*.txt");
+    }
+    else {
+        strcat(directory_pattern, "/*.txt");
+    }
     
     //initialize locking mechanism
     lock_init();
@@ -42,7 +124,8 @@ int main(int argc, char **argv) {
     
     //init FFShark and FIFO
     write_axilite(&axil_ffshark, FFSHARK_ENABLE_OFFSET, 0x1);
-    write_axilite(&axil_fifo, FIFO_SRR_OFFSET, FIFO_SRR_RST_VAL);
+    if (reset_fifo != 0)
+        write_axilite(&axil_fifo, FIFO_SRR_OFFSET, FIFO_SRR_RST_VAL);
     unlock(lock_fd);
     
     //get all the packet text files in the given directory
@@ -50,7 +133,8 @@ int main(int argc, char **argv) {
     int glob_res;    
     glob_res =  glob(directory_pattern, 0, NULL, &file_names);
     if (glob_res == GLOB_NOMATCH || glob_res == GLOB_ABORTED || glob_res == GLOB_NOSPACE){
-        printf("Could not find matching pattern for files");
+        printf("Could not find matching pattern for files\n");
+        printf("Either directory does not exist, or the directory does not have .txt files for its packets\n");
         return -1;
     }
     
@@ -73,7 +157,7 @@ int main(int argc, char **argv) {
     double write_word_no_lock_time = 0;
     clock_t start_time = clock();
     
-    while(iteration_count < num_packets){
+    while(iteration_count < num_packets || num_packets <= -1){
         
         //choose random packet file 
         packet_file_index = rand() % file_names.gl_pathc;
@@ -117,7 +201,7 @@ int main(int argc, char **argv) {
             write_axilite(&axil_fifo, FIFO_TDFD_OFFSET, packet_data);
             write_word_no_lock_time += (clock() - write_word_start)/(CLOCKS_PER_SEC/1000000);
         }
-        
+        fclose(fp);        
         
         //Write the number of bytes to TLR
         //divide by 2 because each hex char is UTF-8 so 1 byte but it represents only 4 bits so it's 2x the data
@@ -126,6 +210,7 @@ int main(int argc, char **argv) {
         total_write_time += (double)(clock() - write_start)/(CLOCKS_PER_SEC/1000000);
         
         iteration_count+=1;
+        //printf("iteration count: %d\n", iteration_count);
         
     }
     
