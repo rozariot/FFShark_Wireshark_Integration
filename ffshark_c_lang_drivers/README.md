@@ -10,5 +10,3 @@ These are a set of C drivers to interface Wireshark with FFShark. These drivers 
 
 ToDo's
 - The AXI interface API in libmpsoc library still needs to be tested. AXIlite and locking mechanism APIs in libmpsoc have been tested and function correctly
-- `ffshark_send_packets.c` is still missing various features that its python version contains. It needs to allow various user input parameters such as the number of packets being sent, the directory location of the packets that are being sent, performance testing enabling parameters etc. These missing features can be cross referenced with `ffshark_send_packets.py` found in the directory one level above.
-- `ffshark_read_packets.c` is still missing various features that its python version contains. It needs to allow various user input parameters such as the number of iterations of packet reading from FFShark, performance testing enabling parameters etc. These missing features can be cross referenced with `ffshark_read_packets.py` found in the directory one level above.
