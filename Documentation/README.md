@@ -1,5 +1,8 @@
 This directory contains documentation that we have created throughout the course of the project from 2020 to 2021 school year.
+In addition, we've included links to additional reference documentation and our final presentation.
 
+## Capstone Final Presentation Link
+- [Capstone Final Presentation](https://www.youtube.com/watch?v=Wg8QZ4yEKc4&ab_channel=AlexBuck)
 
 ## Additional Reference Documentation links
 - [Getting Started Guide by Marco](https://docs.google.com/document/d/1H1frpdz7j3hkfRUXrA85vH-yZl9hWJdxOMbq-1UOPcI/edit?usp=sharing)
