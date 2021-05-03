@@ -87,13 +87,8 @@ If you need to debug, running, `cat received_packets.txt | sed 's/   .*//g' |  a
 
 If you're trying to verify multiple separate bursts of sending in data, you'd have to save each one to a different file. Then in Wireshark, you need to select the packets to export that correspond to what you sent in and export a separate file for each.
 
-### Debug log of issue with multiple packets
-Issue was the read script increased iteration even if no packet was read. This meant we would always skip header if starting later.
-
-## Issues
+## ToDo's
 - Doesn't look like we ever clean up the interface in ffshark_send/read_packets.py. Should call axilite.clean() at some point. How will interrupts work? Is it safe.
-- Still not certain we don't ocassionally hang the board. Is something not thread safe??
-- Right now we're writing the PCAP file to an actual file first, then reading it and printing to terminal. This seems unecessary and we should see if we can print directly.
 - Need to optimize packet filtering throughput. Currently using AXI FIFO interface. Should try AXI DMA
 
 
