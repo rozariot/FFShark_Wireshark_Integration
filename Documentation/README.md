@@ -1,4 +1,4 @@
-This directory contains documentation that we have created throughout the course of the project from 2020 to 2021 school year.
+This directory contains documentation that we have created throughout the project from 2020 to 2021 school year.
 In addition, we've included links to additional reference documentation and our final presentation.
 
 ## Capstone Final Presentation Link
