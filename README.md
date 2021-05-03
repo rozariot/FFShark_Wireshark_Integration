@@ -16,6 +16,8 @@ FFShark is a hardware network debugging tool developed by J.C. Vega and M.A. Mer
 
 `compilefilt.c` uses pcap library to compile filtering instructions into raw bpf filter. This was taken from https://github.com/UofT-HPRC/fpga-bpf/tree/main/utilities/compilefilt. This script currently outputs generated bpf instructions into the terminal. These outputs may need to be disabled to avoid interference of pcap packet transaction through sshdump. Run `gcc -o compilefilt compilefilt.c -lpcap` to regenerate `compilefilt` after any changes.
 
+`compilefilt` an exe that compiles a PCAP filter.
+
 `compile_and_send_filter.py` takes a filtering instruction, compiles it and sends the bpf compiled instructions to FFShark to be configured. Uses `compilefilt` and `sendfilt` to compile and send the filter respectively. This is called by `ffshark_read_packets.py` to allow users to set the packet filter on Wireshark.
 
 `acceptall.bpf` used to reset FFshark filter to accept all packets.
