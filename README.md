@@ -14,18 +14,6 @@ FFShark is a hardware network debugging tool developed by J.C. Vega and M.A. Mer
 
 `pcap_formatter.py` is used to read a packet stored as a binary file (.bin) and formats it into pcap format. Use `-h` to see what to place as arguments.
 
-`spoke.sh` is a wrapper around "poke" to use a locking file so only one thread may run poke at a time. Otherwise we can end up with corrupted data if we use "poke" in multithreaded situations.
-
-`sdpoke.sh` is a wrapper around "dpoke" to use a locking file so only one thread may run poke/dpoke at a time. Otherwise we can end up with corrupted data if we use "poke" or "dpoke" in multithreaded situations.
-
-`send_file_safe.sh` thread safe version of send_file.sh. Takes an input packet text file and sends it to ffshark.
-
-`send_file.sh` thread unsafe version of send_file.sh. Takes an input packet text file and sends it to ffshark.
-
-`receive_file.sh` used to read a packet from the receive FIFO in FFShark. This is the thread unsafe version.
-
-`reg_names.sh` a script that loads the registers offsets for FFShark into a bash shell.
-
 `sendfilter` an exe that programs FFShark with a filter. Requires a .bpf file as input.
 
 `compile_filter.py` gets a filtering instruction through sshdump, and calls the `compilefilt` executable generated from `compilefilt.c` source code to compile a .bpf file containing the filtering instructions. The .bpf file will then need to be sent to the fpga. This code is mainly just for testing how to send a filtering instruction to the ARM chip through SSHdump.
