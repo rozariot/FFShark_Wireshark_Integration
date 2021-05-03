@@ -67,7 +67,7 @@ program ffshark_fifo.bin
 exit
 ```
 3. `cd ffshark_c_lang_drivers`
-4. Run `make ffshark_read_packets` to compile.
+4. Run `make` to compile.
 5. On MPSoC, send in packets `./ffshark_send_packets --directory ../sample_packets/multiple_8  --num-packets 5`.
 6. On sshdump interface in Wireshark, set capture command to `/home/savi/alex/FFShark_Wireshark_Integration/ffshark_c_lang_drivers/ffshark_read_packets`
 7. Once done using MPSoC, send message in Slack to say done using.
