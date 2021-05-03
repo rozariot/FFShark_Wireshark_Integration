@@ -22,8 +22,6 @@ FFShark is a hardware network debugging tool developed by J.C. Vega and M.A. Mer
 
 `acceptall.bpf` used to reset FFshark filter to accept all packets.
 
-`read_packets.py` is used to read the generated packets into human readable. It can also output packets into PCAP format. Mainly for prototyping and learning purposes. Not officially used in the FFShark reading and writing code. Again, use the `--help` option to see more about it.
-
 ## Running FFShark with Wireshark Guide
 
 This method gets about 81kbps (kilobits per second) with locking but no contention.
