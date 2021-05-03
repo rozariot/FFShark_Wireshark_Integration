@@ -1,5 +1,9 @@
 This directory contains scripts we have used to prototype aspects of our design
 
+`read_packets.py` is used to read the generated packets into human readable. It can also output packets into PCAP format. Mainly for prototyping and learning purposes. Not officially used in the FFShark reading and writing driver code. Again, use the `--help` option to see more about it.
+
+`run_multiple_packets.py` was also used for similar purposes
+
 ## Displaying generated packets on Wireshark (without going through FFShark)
 
 1. Copy the `read_packet.py` script and a random packet in the `sample_packet` directory over to savi@10.10.14.215.
