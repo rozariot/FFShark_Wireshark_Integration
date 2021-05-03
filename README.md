@@ -88,7 +88,6 @@ If you need to debug, running, `cat received_packets.txt | sed 's/   .*//g' |  a
 If you're trying to verify multiple separate bursts of sending in data, you'd have to save each one to a different file. Then in Wireshark, you need to select the packets to export that correspond to what you sent in and export a separate file for each.
 
 ## ToDo's
-- Doesn't look like we ever clean up the interface in ffshark_send/read_packets.py. Should call axilite.clean() at some point. How will interrupts work? Is it safe.
 - Need to optimize packet filtering throughput. Currently using AXI FIFO interface. Should try AXI DMA
 
 
