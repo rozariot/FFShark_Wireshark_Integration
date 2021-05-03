@@ -10,7 +10,7 @@ FFShark is a hardware network debugging tool developed by J.C. Vega and M.A. Mer
 
 `test_packets.py` is used to generate "random" packets. These packets can be stored in a directory, then sent to FFShark with `ffshark_send_packets.py` for testing. Running it with the `--help` option will provide details on all arguments that can be provided.
 
-`read_packets.py` is used to read the generated packets into human readable. It can also output packets into PCAP format. Again, use the `--help` option to see more about it.
+`sendfilter.c` Configures filtering instruction into FFShark. Was used to generate `sendfilter`. Run `gcc -o sendfilter sendfilter.c -lpcap` to regenerate `sendfilter` after any changes.
 
 `sendfilter` an exe that programs FFShark with a filter. Requires a .bpf file as input.
 
